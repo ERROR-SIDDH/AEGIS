@@ -73,6 +73,151 @@ export async function saveQuestion(data: unknown) {
     redirect('/dashboard/questions');
 }
 
+export async function bulkUploadQuestions(csvData: string) {
+    try {
+        const lines = csvData.trim().split('\n');
+        if (lines.length < 2) {
+            return { success: false, error: 'CSV file is empty or has no data rows.' };
+        }
+
+        // Parse header
+        const header = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+        
+        // Expected columns: Question Text, Option 1, Option 2, Option 3, Option 4, Correct Options, Category, Tags, Weight, Negative Marking
+        const expectedHeaders = ['Question Text', 'Option 1', 'Option 2', 'Option 3', 'Option 4', 'Correct Options', 'Category', 'Tags', 'Weight', 'Negative Marking'];
+        
+        const results: { success: boolean; row: number; error?: string; questionText?: string }[] = [];
+        const questionsToInsert: any[] = [];
+
+        for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue; // Skip empty lines
+
+            try {
+                // Simple CSV parsing (handle quoted fields)
+                const values: string[] = [];
+                let currentValue = '';
+                let insideQuotes = false;
+
+                for (let char of line) {
+                    if (char === '"') {
+                        insideQuotes = !insideQuotes;
+                    } else if (char === ',' && !insideQuotes) {
+                        values.push(currentValue.trim().replace(/^"|"$/g, ''));
+                        currentValue = '';
+                    } else {
+                        currentValue += char;
+                    }
+                }
+                values.push(currentValue.trim().replace(/^"|"$/g, '')); // Push last value
+
+                if (values.length < 10) {
+                    results.push({ success: false, row: i + 1, error: `Insufficient columns (expected 10, got ${values.length})` });
+                    continue;
+                }
+
+                const [questionText, opt1, opt2, opt3, opt4, correctOptionsStr, category, tagsStr, weightStr, negativeMarkingStr] = values;
+
+                // Validate required fields
+                if (!questionText || questionText.length < 10) {
+                    results.push({ success: false, row: i + 1, error: 'Question text must be at least 10 characters', questionText });
+                    continue;
+                }
+
+                if (!opt1 || !opt2) {
+                    results.push({ success: false, row: i + 1, error: 'At least two options are required', questionText });
+                    continue;
+                }
+
+                // Parse options
+                const options: { text: string }[] = [];
+                if (opt1) options.push({ text: opt1 });
+                if (opt2) options.push({ text: opt2 });
+                if (opt3) options.push({ text: opt3 });
+                if (opt4) options.push({ text: opt4 });
+
+                // Parse correct options (comma-separated indices like "0,2" or single "1")
+                const correctOptions = correctOptionsStr
+                    .split(',')
+                    .map(s => parseInt(s.trim()))
+                    .filter(n => !isNaN(n) && n >= 0 && n < options.length);
+
+                if (correctOptions.length === 0) {
+                    results.push({ success: false, row: i + 1, error: 'At least one valid correct option index is required', questionText });
+                    continue;
+                }
+
+                // Validate category
+                if (!['Easy', 'Medium', 'Hard'].includes(category)) {
+                    results.push({ success: false, row: i + 1, error: `Invalid category "${category}". Must be Easy, Medium, or Hard`, questionText });
+                    continue;
+                }
+
+                // Parse tags
+                const tags = tagsStr ? tagsStr.split(';').map(t => t.trim()).filter(t => t) : [];
+
+                // Parse weight
+                const weight = parseFloat(weightStr);
+                if (isNaN(weight) || weight < 0) {
+                    results.push({ success: false, row: i + 1, error: 'Weight must be a non-negative number', questionText });
+                    continue;
+                }
+
+                // Parse negative marking
+                const negativeMarking = negativeMarkingStr.toLowerCase() === 'true' || negativeMarkingStr === '1';
+
+                // Create question object
+                const questionData = {
+                    text: questionText,
+                    options,
+                    correctOptions,
+                    category: category as 'Easy' | 'Medium' | 'Hard',
+                    tags,
+                    weight,
+                    negativeMarking,
+                };
+
+                questionsToInsert.push(questionData);
+                results.push({ success: true, row: i + 1, questionText });
+
+            } catch (error) {
+                results.push({ 
+                    success: false, 
+                    row: i + 1, 
+                    error: `Parse error: ${error instanceof Error ? error.message : 'Unknown error'}` 
+                });
+            }
+        }
+
+        // Insert all valid questions
+        if (questionsToInsert.length > 0) {
+            const questionsCollection = await getQuestionsCollection();
+            await questionsCollection.insertMany(questionsToInsert);
+            await logAdminAction('Bulk Uploaded Questions', { count: questionsToInsert.length });
+            revalidatePath('/dashboard/questions');
+            revalidatePath('/dashboard');
+        }
+
+        const successCount = results.filter(r => r.success).length;
+        const errorCount = results.filter(r => !r.success).length;
+
+        return {
+            success: true,
+            totalRows: lines.length - 1,
+            successCount,
+            errorCount,
+            results,
+        };
+
+    } catch (error) {
+        console.error('Bulk upload error:', error);
+        return {
+            success: false,
+            error: `Failed to process CSV file: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        };
+    }
+}
+
 export async function addStudent(data: unknown) {
   const studentSchema = z.object({
     name: z.string().min(1, "Name is required."),
@@ -1374,5 +1519,215 @@ export async function bulkAssignExamToStudents(studentIds: string[], examId: str
     } catch (error) {
         console.error('Error bulk assigning exam:', error);
         return { success: false, error: 'Failed to assign exam to students.' };
+    }
+}
+
+// ==================== DANGEROUS ADMIN OPERATIONS ====================
+// These operations should only be accessible to superadmins and require confirmation
+
+export async function deleteAllQuestions() {
+    try {
+        const adminCookie = cookies().get('admin_user');
+        if (!adminCookie) {
+            return { success: false, error: 'Authentication required.' };
+        }
+
+        const currentUser = JSON.parse(adminCookie.value);
+        if (currentUser.role !== 'superadmin') {
+            return { success: false, error: 'Only superadmins can perform this action.' };
+        }
+
+        const questionsCollection = await getQuestionsCollection();
+        const result = await questionsCollection.deleteMany({});
+
+        await logAdminAction('DELETED ALL QUESTIONS', { deletedCount: result.deletedCount });
+        revalidatePath('/dashboard/questions');
+        revalidatePath('/dashboard');
+        return { success: true, deletedCount: result.deletedCount };
+    } catch (error) {
+        console.error('Error deleting all questions:', error);
+        return { success: false, error: 'Failed to delete questions.' };
+    }
+}
+
+export async function clearAllLogs() {
+    try {
+        const adminCookie = cookies().get('admin_user');
+        if (!adminCookie) {
+            return { success: false, error: 'Authentication required.' };
+        }
+
+        const currentUser = JSON.parse(adminCookie.value);
+        if (currentUser.role !== 'superadmin') {
+            return { success: false, error: 'Only superadmins can perform this action.' };
+        }
+
+        const adminLogsCollection = await getAdminLogsCollection();
+        const result = await adminLogsCollection.deleteMany({});
+
+        // Log this action before deletion completes
+        await adminLogsCollection.insertOne({
+            adminUsername: currentUser.username,
+            action: 'CLEARED ALL LOGS',
+            details: { deletedCount: result.deletedCount },
+            timestamp: new Date(),
+        });
+
+        revalidatePath('/dashboard/logs');
+        return { success: true, deletedCount: result.deletedCount };
+    } catch (error) {
+        console.error('Error clearing logs:', error);
+        return { success: false, error: 'Failed to clear logs.' };
+    }
+}
+
+export async function deleteAllStudents() {
+    try {
+        const adminCookie = cookies().get('admin_user');
+        if (!adminCookie) {
+            return { success: false, error: 'Authentication required.' };
+        }
+
+        const currentUser = JSON.parse(adminCookie.value);
+        if (currentUser.role !== 'superadmin') {
+            return { success: false, error: 'Only superadmins can perform this action.' };
+        }
+
+        const studentsCollection = await getStudentsCollection();
+        const pcsCollection = await getPcsCollection();
+
+        // First, unassign all students from PCs
+        await pcsCollection.updateMany(
+            {},
+            { $set: { assignedStudentId: null, assignedStudentName: null, assignedStudentRollNumber: null, assignedExamId: null } }
+        );
+
+        const result = await studentsCollection.deleteMany({});
+
+        await logAdminAction('DELETED ALL STUDENTS', { deletedCount: result.deletedCount });
+        revalidatePath('/dashboard/students');
+        revalidatePath('/dashboard/pcs');
+        revalidatePath('/dashboard');
+        return { success: true, deletedCount: result.deletedCount };
+    } catch (error) {
+        console.error('Error deleting all students:', error);
+        return { success: false, error: 'Failed to delete students.' };
+    }
+}
+
+export async function deleteAllExams() {
+    try {
+        const adminCookie = cookies().get('admin_user');
+        if (!adminCookie) {
+            return { success: false, error: 'Authentication required.' };
+        }
+
+        const currentUser = JSON.parse(adminCookie.value);
+        if (currentUser.role !== 'superadmin') {
+            return { success: false, error: 'Only superadmins can perform this action.' };
+        }
+
+        const examsCollection = await getExamsCollection();
+        const result = await examsCollection.deleteMany({});
+
+        await logAdminAction('DELETED ALL EXAMS', { deletedCount: result.deletedCount });
+        revalidatePath('/dashboard/exams');
+        revalidatePath('/dashboard');
+        return { success: true, deletedCount: result.deletedCount };
+    } catch (error) {
+        console.error('Error deleting all exams:', error);
+        return { success: false, error: 'Failed to delete exams.' };
+    }
+}
+
+export async function deleteAllResults() {
+    try {
+        const adminCookie = cookies().get('admin_user');
+        if (!adminCookie) {
+            return { success: false, error: 'Authentication required.' };
+        }
+
+        const currentUser = JSON.parse(adminCookie.value);
+        if (currentUser.role !== 'superadmin') {
+            return { success: false, error: 'Only superadmins can perform this action.' };
+        }
+
+        const examResultsCollection = await getExamResultsCollection();
+        const result = await examResultsCollection.deleteMany({});
+
+        await logAdminAction('DELETED ALL EXAM RESULTS', { deletedCount: result.deletedCount });
+        revalidatePath('/dashboard/results');
+        return { success: true, deletedCount: result.deletedCount };
+    } catch (error) {
+        console.error('Error deleting all results:', error);
+        return { success: false, error: 'Failed to delete results.' };
+    }
+}
+
+export async function flushAllData() {
+    try {
+        const adminCookie = cookies().get('admin_user');
+        if (!adminCookie) {
+            return { success: false, error: 'Authentication required.' };
+        }
+
+        const currentUser = JSON.parse(adminCookie.value);
+        if (currentUser.role !== 'superadmin') {
+            return { success: false, error: 'Only superadmins can perform this action.' };
+        }
+
+        const studentsCollection = await getStudentsCollection();
+        const questionsCollection = await getQuestionsCollection();
+        const examsCollection = await getExamsCollection();
+        const examResultsCollection = await getExamResultsCollection();
+        const pcsCollection = await getPcsCollection();
+        const pcRequestsCollection = await getPcRequestsCollection();
+
+        // Delete all data except admins and logs
+        const [students, questions, exams, results, pcs, pcRequests] = await Promise.all([
+            studentsCollection.deleteMany({}),
+            questionsCollection.deleteMany({}),
+            examsCollection.deleteMany({}),
+            examResultsCollection.deleteMany({}),
+            pcsCollection.deleteMany({}),
+            pcRequestsCollection.deleteMany({}),
+        ]);
+
+        const totalDeleted = 
+            students.deletedCount +
+            questions.deletedCount +
+            exams.deletedCount +
+            results.deletedCount +
+            pcs.deletedCount +
+            pcRequests.deletedCount;
+
+        await logAdminAction('FLUSHED ALL DATA', {
+            studentsDeleted: students.deletedCount,
+            questionsDeleted: questions.deletedCount,
+            examsDeleted: exams.deletedCount,
+            resultsDeleted: results.deletedCount,
+            pcsDeleted: pcs.deletedCount,
+            pcRequestsDeleted: pcRequests.deletedCount,
+            totalDeleted,
+        });
+
+        revalidatePath('/dashboard');
+        revalidatePath('/dashboard/students');
+        revalidatePath('/dashboard/questions');
+        revalidatePath('/dashboard/exams');
+        revalidatePath('/dashboard/results');
+        revalidatePath('/dashboard/pcs');
+
+        return { success: true, totalDeleted, details: {
+            students: students.deletedCount,
+            questions: questions.deletedCount,
+            exams: exams.deletedCount,
+            results: results.deletedCount,
+            pcs: pcs.deletedCount,
+            pcRequests: pcRequests.deletedCount,
+        }};
+    } catch (error) {
+        console.error('Error flushing all data:', error);
+        return { success: false, error: 'Failed to flush data.' };
     }
 }
