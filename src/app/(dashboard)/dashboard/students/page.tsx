@@ -19,6 +19,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal, PlusCircle, Upload, ClipboardList } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { BulkUploadStudents } from '@/components/bulk-upload-students';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useForm } from 'react-hook-form';
@@ -61,6 +62,7 @@ export default function StudentsPage() {
     const [students, setStudents] = useState<WithId<Student>[]>([]);
     const [scheduledExams, setScheduledExams] = useState<WithId<Exam>[]>([]);
     const [addDialogOpen, setAddDialogOpen] = useState(false);
+    const [bulkUploadDialogOpen, setBulkUploadDialogOpen] = useState(false);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [bulkAssignDialogOpen, setBulkAssignDialogOpen] = useState(false);
     const [studentToEdit, setStudentToEdit] = useState<WithId<Student> | null>(null);
@@ -196,7 +198,21 @@ export default function StudentsPage() {
                     </CardDescription>
                 </div>
                 <div className="flex gap-2">
-                     <Dialog open={bulkAssignDialogOpen} onOpenChange={setBulkAssignDialogOpen}>
+                     <Dialog open={bulkUploadDialogOpen} onOpenChange={setBulkUploadDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline">
+                                <Upload className="mr-2 h-4 w-4" />
+                                Bulk Upload
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl">
+                            <BulkUploadStudents onUploadComplete={() => {
+                                fetchStudentsAndExams();
+                                setBulkUploadDialogOpen(false);
+                            }} />
+                        </DialogContent>
+                    </Dialog>
+                    <Dialog open={bulkAssignDialogOpen} onOpenChange={setBulkAssignDialogOpen}>
                         <DialogTrigger asChild>
                             <Button variant="outline" disabled={selectedStudentIds.length === 0}>
                                 <ClipboardList className="mr-2 h-4 w-4" />
@@ -230,23 +246,6 @@ export default function StudentsPage() {
                                     {isPending ? 'Assigning...' : 'Assign Exam'}
                                 </Button>
                             </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-                    <Dialog>
-                        <DialogTrigger asChild>
-                            <Button variant="outline"><Upload className="mr-2 h-4 w-4" /> Import CSV</Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Import Students via CSV</DialogTitle>
-                                <DialogDescription>
-                                    Upload a CSV file with columns: Name, RollNumber, ClassBatch. The roll number must be unique.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <Input id="csv-file" type="file" accept=".csv" />
-                            </div>
-                            <Button type="submit">Upload and Validate</Button>
                         </DialogContent>
                     </Dialog>
                     <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>

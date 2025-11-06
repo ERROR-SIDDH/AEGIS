@@ -260,6 +260,164 @@ export async function addStudent(data: unknown) {
   }
 }
 
+export async function bulkUploadStudents(csvData: string) {
+    try {
+        const lines = csvData.trim().split('\n');
+        if (lines.length < 2) {
+            return { success: false, error: 'CSV file is empty or has no data rows.' };
+        }
+
+        // Parse header - Expected columns: Name, Roll Number, Class/Batch, Exam ID (optional)
+        const results: { success: boolean; row: number; error?: string; studentName?: string }[] = [];
+        const studentsToInsert: any[] = [];
+        const examsCollection = await getExamsCollection();
+
+        // Get all exams to validate exam IDs and titles
+        const allExams = await examsCollection.find({}).toArray();
+        const examsByTitle = new Map(allExams.map(e => [e.title.toLowerCase(), e._id]));
+        const examsById = new Map(allExams.map(e => [e._id.toString(), e._id]));
+
+        for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue; // Skip empty lines
+
+            try {
+                // Simple CSV parsing (handle quoted fields)
+                const values: string[] = [];
+                let currentValue = '';
+                let insideQuotes = false;
+
+                for (let char of line) {
+                    if (char === '"') {
+                        insideQuotes = !insideQuotes;
+                    } else if (char === ',' && !insideQuotes) {
+                        values.push(currentValue.trim().replace(/^"|"$/g, ''));
+                        currentValue = '';
+                    } else {
+                        currentValue += char;
+                    }
+                }
+                values.push(currentValue.trim().replace(/^"|"$/g, '')); // Push last value
+
+                if (values.length < 3) {
+                    results.push({ success: false, row: i + 1, error: `Insufficient columns (expected at least 3, got ${values.length})` });
+                    continue;
+                }
+
+                const [name, rollNumber, classBatch, examIdOrTitle = ''] = values;
+
+                // Validate required fields
+                if (!name || name.length < 1) {
+                    results.push({ success: false, row: i + 1, error: 'Name is required', studentName: name });
+                    continue;
+                }
+
+                if (!rollNumber || rollNumber.length < 1) {
+                    results.push({ success: false, row: i + 1, error: 'Roll number is required', studentName: name });
+                    continue;
+                }
+
+                if (!classBatch || classBatch.length < 1) {
+                    results.push({ success: false, row: i + 1, error: 'Class/Batch is required', studentName: name });
+                    continue;
+                }
+
+                // Create student object
+                const studentData: any = {
+                    name,
+                    rollNumber,
+                    classBatch,
+                };
+
+                // Handle optional exam assignment
+                if (examIdOrTitle && examIdOrTitle.trim()) {
+                    // Try to match by exam ID first, then by title
+                    let examObjectId: ObjectId | null = null;
+
+                    if (examsById.has(examIdOrTitle)) {
+                        examObjectId = examsById.get(examIdOrTitle)!;
+                    } else {
+                        // Try matching by title (case-insensitive)
+                        examObjectId = examsByTitle.get(examIdOrTitle.toLowerCase()) || null;
+                    }
+
+                    if (examObjectId) {
+                        studentData.assignedExamId = examObjectId;
+                    } else {
+                        results.push({ 
+                            success: false, 
+                            row: i + 1, 
+                            error: `Exam "${examIdOrTitle}" not found. Leave empty or use valid exam title/ID.`, 
+                            studentName: name 
+                        });
+                        continue;
+                    }
+                }
+
+                studentsToInsert.push(studentData);
+                results.push({ success: true, row: i + 1, studentName: name });
+
+            } catch (error) {
+                results.push({ 
+                    success: false, 
+                    row: i + 1, 
+                    error: `Parse error: ${error instanceof Error ? error.message : 'Unknown error'}` 
+                });
+            }
+        }
+
+        // Check for duplicate roll numbers in the upload
+        const rollNumbers = studentsToInsert.map(s => s.rollNumber);
+        const duplicates = rollNumbers.filter((item, index) => rollNumbers.indexOf(item) !== index);
+        if (duplicates.length > 0) {
+            return {
+                success: false,
+                error: `Duplicate roll numbers found in CSV: ${[...new Set(duplicates)].join(', ')}`,
+            };
+        }
+
+        // Check for existing roll numbers in database
+        if (studentsToInsert.length > 0) {
+            const studentsCollection = await getStudentsCollection();
+            const existingStudents = await studentsCollection.find({
+                rollNumber: { $in: rollNumbers }
+            }).toArray();
+
+            if (existingStudents.length > 0) {
+                const existingRollNumbers = existingStudents.map(s => s.rollNumber).join(', ');
+                return {
+                    success: false,
+                    error: `Roll numbers already exist in database: ${existingRollNumbers}`,
+                };
+            }
+
+            // Insert all valid students
+            await studentsCollection.insertMany(studentsToInsert);
+            await logAdminAction('Bulk Uploaded Students', { count: studentsToInsert.length });
+            revalidatePath('/dashboard/students');
+            revalidatePath('/dashboard');
+        }
+
+        const successCount = results.filter(r => r.success).length;
+        const errorCount = results.filter(r => !r.success).length;
+
+        return {
+            success: true,
+            totalRows: lines.length - 1,
+            successCount,
+            errorCount,
+            results,
+        };
+
+    } catch (error) {
+        console.error('Bulk upload error:', error);
+        return {
+            success: false,
+            error: `Failed to process CSV file: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        };
+    }
+}
+
 async function fetchAndMapDocuments<T extends Document>(collectionName: 'students' | 'pcs' | 'questions' | 'exams' | 'admins' | 'admin_logs'): Promise<WithId<T>[]> {
   let collection;
   switch (collectionName) {
