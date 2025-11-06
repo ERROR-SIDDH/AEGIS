@@ -140,11 +140,11 @@ async function fetchAndMapDocuments<T extends Document>(collectionName: 'student
       throw new Error('Invalid collection name');
   }
 
-  const documents = await collection.find({}).sort({ timestamp: -1 }).toArray();
-  return documents.map(doc => ({
-    ...doc,
-    _id: doc._id.toString(),
-  })) as WithId<T>[];
+    const documents = await collection.find({}).sort({ timestamp: -1 }).toArray();
+    return documents.map(doc => ({
+        ...doc,
+        _id: doc._id.toString(),
+    })) as unknown as WithId<T>[]; // Cast through unknown to satisfy TS structure
 }
 
 
@@ -355,10 +355,10 @@ export async function getExams(filter: { status?: 'Scheduled' | 'In Progress' | 
                 plainExam.startTime = exam.startTime.toISOString();
             }
             if (exam.assignedStudentIds) {
-                plainExam.assignedStudentIds = exam.assignedStudentIds.map(id => id.toString());
+                plainExam.assignedStudentIds = exam.assignedStudentIds.map((id: ObjectId | string) => id.toString());
             }
-             if (exam.questionIds) {
-                plainExam.questionIds = exam.questionIds.map(id => id.toString());
+            if (exam.questionIds) {
+                plainExam.questionIds = exam.questionIds.map((id: ObjectId | string) => id.toString());
             }
             return plainExam as WithId<Exam>;
         });
@@ -920,13 +920,31 @@ export async function assignStudentToPc(pcId: string, studentId: string | null) 
 }
 
 
-export async function getExamDetails(examId: string, studentId: string) {
+export async function getExamDetails(examId: string, studentId: string, pcIdentifier?: string) {
     try {
         const examsCollection = await getExamsCollection();
         const examResultsCollection = await getExamResultsCollection();
+        const pcsCollection = await getPcsCollection();
+        const studentsCollection = await getStudentsCollection();
         
         const examObjectId = new ObjectId(examId);
         const studentObjectId = new ObjectId(studentId);
+
+        // Optional server-side guard: ensure the request comes from the mapped PC and exam
+        if (pcIdentifier) {
+            const pc = await pcsCollection.findOne({ uniqueIdentifier: pcIdentifier });
+            if (!pc) {
+                return { exam: null, questions: [], alreadyTaken: false, error: 'PC not registered.' };
+            }
+            if (!pc.assignedStudentId || !pc.assignedStudentId.equals?.(studentObjectId)) {
+                return { exam: null, questions: [], alreadyTaken: false, error: 'Student is not assigned to this PC.' };
+            }
+            // Verify the student's assigned exam matches the requested exam
+            const studentDoc = await studentsCollection.findOne({ _id: studentObjectId });
+            if (!studentDoc || !studentDoc.assignedExamId || !studentDoc.assignedExamId.equals?.(examObjectId)) {
+                return { exam: null, questions: [], alreadyTaken: false, error: 'This student is not assigned to this exam.' };
+            }
+        }
 
         // Check if the student has already taken this exam
         const existingResult = await examResultsCollection.findOne({
@@ -948,13 +966,18 @@ export async function getExamDetails(examId: string, studentId: string) {
             return { exam: null, questions: [], alreadyTaken: false };
         }
 
+        // Only allow access while exam is in progress
+        if (exam.status !== 'In Progress') {
+            return { exam: null, questions: [], alreadyTaken: false, error: 'Exam is not in progress.' };
+        }
+
         const questions = await getQuestions(exam.questionIds as ObjectId[]);
         
         const serializableExam = {
              ...exam,
             _id: exam._id.toString(),
             startTime: exam.startTime.toISOString(),
-            questionIds: exam.questionIds.map(id => id.toString())
+            questionIds: exam.questionIds.map((id: ObjectId | string) => id.toString())
         };
 
         const serializableQuestions = questions.map(q => ({
@@ -975,7 +998,7 @@ export async function getExamDetails(examId: string, studentId: string) {
 }
 
 
-export async function submitExam(examId: string, studentId: string, answers: { questionId: string, selectedOption: number | null }[]) {
+export async function submitExam(examId: string, studentId: string, answers: { questionId: string, selectedOption: number | null }[], pcIdentifier?: string) {
     try {
         const examsCollection = await getExamsCollection();
         const questionsCollection = await getQuestionsCollection();
@@ -993,18 +1016,39 @@ export async function submitExam(examId: string, studentId: string, answers: { q
             return { error: 'Invalid exam or student.' };
         }
 
+        // Optional server-side guard: ensure submission originates from mapped PC and exam
+        if (pcIdentifier) {
+            const pc = await pcsCollection.findOne({ uniqueIdentifier: pcIdentifier });
+            if (!pc) {
+                return { error: 'PC not registered.' };
+            }
+            if (!pc.assignedStudentId || !pc.assignedStudentId.equals?.(studentObjectId)) {
+                return { error: 'Student is not assigned to this PC.' };
+            }
+            if (!student.assignedExamId || !student.assignedExamId.equals?.(examObjectId)) {
+                return { error: 'Student is not assigned to this exam.' };
+            }
+            if (exam.status !== 'In Progress') {
+                return { error: 'Exam is not in progress.' };
+            }
+        }
+
         // Prevent re-submission
         const existingResult = await examResultsCollection.findOne({ examId: examObjectId, studentId: studentObjectId });
         if (existingResult) {
             return { error: 'You have already submitted this exam.' };
         }
         
-        const questionIds = answers.map(a => new ObjectId(a.questionId));
+        // Only consider answers for questions that belong to this exam
+        const validQuestionIds = new Set((exam.questionIds || []).map((id: any) => id.toString()));
+        const filteredAnswers = answers.filter(a => validQuestionIds.has(a.questionId));
+
+        const questionIds = filteredAnswers.map(a => new ObjectId(a.questionId));
         const questions = await questionsCollection.find({ _id: { $in: questionIds } }).toArray();
         
         let score = 0;
         questions.forEach(q => {
-            const answer = answers.find(a => a.questionId === q._id.toString());
+            const answer = filteredAnswers.find(a => a.questionId === q._id.toString());
             if (answer && answer.selectedOption !== null && q.correctOptions.includes(answer.selectedOption)) {
                 score += q.weight || 1;
             }
@@ -1024,10 +1068,18 @@ export async function submitExam(examId: string, studentId: string, answers: { q
         await examResultsCollection.insertOne(examResult);
         
         // Update PC status to Finished
-        await pcsCollection.updateOne(
-            { assignedStudentId: studentObjectId },
-            { $set: { liveStatus: 'Finished' } }
-        );
+        // Mark only this PC as Finished if identifier is provided; otherwise fall back to student binding
+        if (pcIdentifier) {
+            await pcsCollection.updateOne(
+                { uniqueIdentifier: pcIdentifier },
+                { $set: { liveStatus: 'Finished' } }
+            );
+        } else {
+            await pcsCollection.updateOne(
+                { assignedStudentId: studentObjectId },
+                { $set: { liveStatus: 'Finished' } }
+            );
+        }
 
 
         revalidatePath('/dashboard/results');

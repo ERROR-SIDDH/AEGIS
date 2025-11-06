@@ -58,7 +58,7 @@ export default function ExamPage() {
                 return;
             }
             
-            const result = await submitExam(examId, studentId, answers);
+            const result = await submitExam(examId, studentId, answers, pcIdentifier);
 
             if (result.success) {
                 toast({ title: 'Success', description: 'Exam submitted successfully!' });
@@ -93,7 +93,15 @@ export default function ExamPage() {
             }
 
             try {
-                const data = await getExamDetails(examId, studentId);
+                // Extra guard on client: ensure this PC's assigned exam matches the URL
+                const assignedExamId = pcStatus.pcDetails?.exam?._id?.toString();
+                if (!assignedExamId || assignedExamId !== examId) {
+                    setPageError('This PC is not assigned to this exam.');
+                    setIsLoading(false);
+                    return;
+                }
+
+                const data = await getExamDetails(examId, studentId, pcIdentifier);
                 
                 if (data.alreadyTaken) {
                     setAlreadyTaken(true);
@@ -106,7 +114,7 @@ export default function ExamPage() {
                     setQuestions(data.questions);
                     setAnswers(data.questions.map(q => ({ questionId: q._id as string, selectedOption: null })));
                     
-                    const examEndTime = new Date(data.exam.startTime).getTime() + data.exam.duration * 60 * 1000;
+                    const examEndTime = new Date((data.exam as any).startTime).getTime() + (data.exam as any).duration * 60 * 1000;
                     const now = new Date().getTime();
                     const remainingTime = Math.max(0, Math.floor((examEndTime - now) / 1000));
                     setTimeLeft(remainingTime);
@@ -114,7 +122,7 @@ export default function ExamPage() {
                     // Start sending heartbeats
                     updatePcLiveStatus(pcIdentifier, 'Attempting');
                 } else {
-                    setPageError("The exam might not have started or there are no questions.");
+                    setPageError(data?.error || "The exam might not have started or there are no questions.");
                 }
             } catch (e) {
                 toast({ title: 'Error', description: 'Could not load exam details.', variant: 'destructive' });
