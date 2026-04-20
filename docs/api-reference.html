@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Reference — AEGIS ExamLab Docs</title>
+  <meta name="description" content="Complete Server Actions API reference for AEGIS ExamLab.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{primary:'#374785',primaryLight:'#4B5EAA',accent:'#D98E38',bg:'#F0F2F5'},fontFamily:{sans:['Inter','sans-serif'],heading:['Outfit','sans-serif'],mono:['JetBrains Mono','monospace']}}}}</script>
+  <style>
+    body{background:#F0F2F5;} code{font-family:'JetBrains Mono',monospace;font-size:.8em;background:#e8eaed;padding:.15rem .35rem;border-radius:.25rem;color:#374785;}
+    .code-block{background:#1e2330;color:#a8d8a8;border-radius:.75rem;padding:1.25rem 1.5rem;font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:1.75;overflow-x:auto;}
+    aside a{transition:all .15s;display:block;padding:.2rem 0;} aside a:hover{color:#D98E38;}
+    .fn-card{background:white;border:1px solid #e5e7eb;border-radius:1rem;margin-bottom:1.5rem;overflow:hidden;}
+    .fn-header{background:#f8f9fa;padding:1rem 1.5rem;border-bottom:1px solid #e5e7eb;}
+    .param-table th{background:#f0f2f5;} .param-table td,.param-table th{padding:.6rem 1rem;border-bottom:1px solid #f0f0f0;font-size:.85rem;}
+    .tag{display:inline-block;padding:.15rem .6rem;border-radius:.25rem;font-size:.7rem;font-weight:700;}
+    .tag-auth{background:#fef3c7;color:#d97706;} .tag-pc{background:#dbeafe;color:#1d4ed8;} .tag-student{background:#d1fae5;color:#065f46;} .tag-exam{background:#ede9fe;color:#5b21b6;} .tag-ai{background:#fce7f3;color:#9d174d;}
+  </style>
+</head>
+<body class="font-sans antialiased flex flex-col min-h-screen">
+
+<nav class="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-200">
+  <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+    <a href="index.html" class="font-heading font-bold text-xl text-primary">AEGIS <span class="text-accent">ExamLab</span></a>
+    <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
+      <a href="getting-started.html" class="hover:text-primary">Getting Started</a>
+      <a href="architecture.html" class="hover:text-primary">Architecture</a>
+      <a href="api-reference.html" class="text-primary font-bold">API Reference</a>
+      <a href="admin-guide.html" class="hover:text-primary">Admin Guide</a>
+      <a href="contributing.html" class="hover:text-primary">Contributing</a>
+    </div>
+  </div>
+</nav>
+
+<div class="flex flex-1 max-w-7xl mx-auto w-full">
+<aside class="hidden lg:block w-64 flex-shrink-0 py-10 pr-6">
+  <div class="sticky top-24 space-y-5 text-sm text-gray-600">
+    <div><p class="text-xs uppercase font-bold text-gray-400 tracking-widest mb-2">Auth</p>
+      <a href="#authenticate">authenticate()</a>
+      <a href="#logout">logout()</a>
+    </div>
+    <div><p class="text-xs uppercase font-bold text-gray-400 tracking-widest mb-2">Workstation (PC)</p>
+      <a href="#registerPc">registerPc()</a>
+      <a href="#getPcStatus">getPcStatus()</a>
+      <a href="#approvePc">approvePc()</a>
+      <a href="#updatePcLiveStatus">updatePcLiveStatus()</a>
+      <a href="#assignStudentToPc">assignStudentToPc()</a>
+    </div>
+    <div><p class="text-xs uppercase font-bold text-gray-400 tracking-widest mb-2">Students</p>
+      <a href="#getStudents">getStudents()</a>
+      <a href="#addStudent">addStudent()</a>
+      <a href="#updateStudent">updateStudent()</a>
+      <a href="#deleteStudent">deleteStudent()</a>
+      <a href="#bulkUploadStudents">bulkUploadStudents()</a>
+    </div>
+    <div><p class="text-xs uppercase font-bold text-gray-400 tracking-widest mb-2">Questions</p>
+      <a href="#getQuestions">getQuestions()</a>
+      <a href="#saveQuestion">saveQuestion()</a>
+      <a href="#bulkUploadQuestions">bulkUploadQuestions()</a>
+    </div>
+    <div><p class="text-xs uppercase font-bold text-gray-400 tracking-widest mb-2">Exams</p>
+      <a href="#getExams">getExams()</a>
+      <a href="#getExamDetails">getExamDetails()</a>
+      <a href="#submitExam">submitExam()</a>
+    </div>
+    <div><p class="text-xs uppercase font-bold text-gray-400 tracking-widest mb-2">Logs & Results</p>
+      <a href="#getAdminLogs">getAdminLogs()</a>
+      <a href="#getExamResults">getExamResults()</a>
+    </div>
+  </div>
+</aside>
+
+<main class="flex-1 py-10 px-4 lg:px-10">
+  <div class="mb-10">
+    <p class="text-accent font-semibold text-sm mb-2">Reference</p>
+    <h1 class="font-heading text-5xl font-black text-primary mb-4">API Reference</h1>
+    <p class="text-xl text-gray-600 leading-relaxed">All business logic in AEGIS is implemented as Next.js Server Actions inside <code>src/lib/actions.ts</code>. These functions execute exclusively on the server, keeping all MongoDB logic and credentials out of the client bundle. Parameters are validated with <strong>Zod schemas</strong> before any database operation.</p>
+    <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-800">
+      <strong>Why Server Actions?</strong> In a proctoring environment, exposing API route structures to the client would allow a tech-savvy student to reconstruct requests to bypass validation. Server Actions compile to opaque POST endpoints, making the interface impossible to reverse-engineer from the browser.
+    </div>
+  </div>
+
+  <!-- AUTH -->
+  <h2 class="font-heading text-2xl font-bold text-primary mt-12 mb-6 pb-2 border-b border-gray-300">Authentication</h2>
+
+  <div id="authenticate" class="fn-card scroll-mt-24">
+    <div class="fn-header flex items-center gap-3">
+      <span class="tag tag-auth">AUTH</span>
+      <code class="text-base text-primary font-bold bg-transparent p-0">authenticate(prevState, formData)</code>
+    </div>
+    <div class="p-5">
+      <p class="text-gray-700 text-sm mb-4">Validates admin credentials against the <code>admins</code> collection. On success, sets two HttpOnly cookies: <code>auth=true</code> and <code>admin_user</code> (containing username and role as JSON). Also writes an <code>Admin Logged In</code> audit log entry. Redirects to <code>/dashboard</code> on success.</p>
+      <table class="param-table w-full rounded-lg overflow-hidden border border-gray-200 text-sm">
+        <thead><tr><th class="text-left text-gray-600">Parameter</th><th class="text-left text-gray-600">Type</th><th class="text-left text-gray-600">Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>prevState</code></td><td class="text-gray-500">any</td><td class="text-gray-600">Previous form state (Next.js useFormState pattern)</td></tr>
+          <tr><td><code>formData</code></td><td class="text-gray-500">FormData</td><td class="text-gray-600">Must contain <code>username</code> and <code>password</code> fields</td></tr>
+        </tbody>
+      </table>
+      <p class="text-xs text-gray-400 mt-3">Returns: <code>{"{"}message: string{"}"}</code> on failure | Redirects on success</p>
+    </div>
+  </div>
+
+  <div id="logout" class="fn-card scroll-mt-24">
+    <div class="fn-header flex items-center gap-3">
+      <span class="tag tag-auth">AUTH</span>
+      <code class="text-base text-primary font-bold bg-transparent p-0">logout()</code>
+    </div>
+    <div class="p-5">
+      <p class="text-gray-700 text-sm mb-4">Reads the current <code>admin_user</code> cookie, writes an <code>Admin Logged Out</code> audit log entry, then deletes both <code>auth</code> and <code>admin_user</code> cookies. Redirects to <code>/login</code>.</p>
+    </div>
+  </div>
+
+  <!-- PC -->
+  <h2 class="font-heading text-2xl font-bold text-primary mt-12 mb-6 pb-2 border-b border-gray-300">Workstation (PC) Management</h2>
+
+  <div id="registerPc" class="fn-card scroll-mt-24">
+    <div class="fn-header flex items-center gap-3">
+      <span class="tag tag-pc">PC</span>
+      <code class="text-base text-primary font-bold bg-transparent p-0">registerPc(prevState, formData)</code>
+    </div>
+    <div class="p-5">
+      <p class="text-gray-700 text-sm mb-4">Creates a PC registration request. Validates that <code>pcName</code> is at least 3 characters. Generates a unique 12-character random identifier (<code>pc-id-xxxxxxxxxxxx</code>) using a custom alphanumeric RNG and inserts a pending document into the <code>pc_requests</code> collection.</p>
+      <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 mb-4"><strong>Design Note:</strong> This action does NOT require authentication. It is intentionally exposed to allow any machine on the network to self-register. An Admin must then manually approve/reject the request from the dashboard.</div>
+      <p class="text-xs text-gray-400">Returns: <code>{"{"}message: string, status: 'success'|'error', identifier?: string{"}"}</code></p>
+    </div>
+  </div>
+
+  <div id="getPcStatus" class="fn-card scroll-mt-24">
+    <div class="fn-header flex items-center gap-3">
+      <span class="tag tag-pc">PC</span>
+      <code class="text-base text-primary font-bold bg-transparent p-0">getPcStatus(identifier: string)</code>
+    </div>
+    <div class="p-5">
+      <p class="text-gray-700 text-sm mb-4">The heartbeat check for client PCs. Performs a MongoDB aggregation pipeline with two <code>$lookup</code> stages: first joining the assigned student, then joining the student's assigned exam. Updates <code>lastSeen</code> timestamp on every call. Returns the full nested PC context (PC → Student → Exam) for client-side routing decisions.</p>
+      <p class="text-xs text-gray-400">Returns: <code>{"{"}status: string | null, pcDetails: PC & {"{"}student: Student, exam: Exam{"}"} | null{"}"}</code></p>
+    </div>
+  </div>
+
+  <div id="updatePcLiveStatus" class="fn-card scroll-mt-24">
+    <div class="fn-header flex items-center gap-3">
+      <span class="tag tag-pc">PC</span>
+      <code class="text-base text-primary font-bold bg-transparent p-0">updatePcLiveStatus(identifier, status)</code>
+    </div>
+    <div class="p-5">
+      <p class="text-gray-700 text-sm mb-3">Atomically updates a PC's <code>liveStatus</code> field. Called by the exam page's heartbeat interval every 15 seconds and on lifecycle events (exam start, exam submit). Status values: <code>'Online' | 'Ready' | 'Waiting' | 'Attempting' | 'Finished'</code>.</p>
+    </div>
+  </div>
+
+  <!-- STUDENTS -->
+  <h2 class="font-heading text-2xl font-bold text-primary mt-12 mb-6 pb-2 border-b border-gray-300">Student Management</h2>
+
+  <div id="bulkUploadStudents" class="fn-card scroll-mt-24">
+    <div class="fn-header flex items-center gap-3">
+      <span class="tag tag-student">STUDENT</span>
+      <code class="text-base text-primary font-bold bg-transparent p-0">bulkUploadStudents(csvData: string)</code>
+    </div>
+    <div class="p-5">
+      <p class="text-gray-700 text-sm mb-4">Processes a raw CSV string with a custom state-machine parser that handles RFC 4180 quoted fields containing commas. Expected columns: <code>Name, Roll Number, Class/Batch, [Exam ID or Title]</code>.</p>
+      <p class="text-gray-700 text-sm mb-4">Performs multi-layer validation: (1) field presence check, (2) in-memory duplicate roll number scan within the upload batch, (3) DB lookup for pre-existing roll numbers, (4) exam ID/title resolution with case-insensitive matching. Only inserts if all rows pass.</p>
+      <p class="text-xs text-gray-400">Returns: <code>{"{"}success: boolean, successCount: number, errorCount: number, results: RowResult[]{"}"}</code></p>
+    </div>
+  </div>
+
+  <div id="deleteStudent" class="fn-card scroll-mt-24">
+    <div class="fn-header flex items-center gap-3">
+      <span class="tag tag-student">STUDENT</span>
+      <code class="text-base text-primary font-bold bg-transparent p-0">deleteStudent(studentId: string)</code>
+    </div>
+    <div class="p-5">
+      <p class="text-gray-700 text-sm">Performs a cascading delete. Before removing the student document, it calls <code>pcsCollection.updateMany</code> to null out <code>assignedStudentId</code>, <code>assignedStudentName</code>, and <code>assignedStudentRollNumber</code> on all PCs that referenced this student. This prevents dangling references that would break the admin dashboard's aggregation queries.</p>
+    </div>
+  </div>
+
+  <!-- QUESTIONS -->
+  <h2 class="font-heading text-2xl font-bold text-primary mt-12 mb-6 pb-2 border-b border-gray-300">Question Bank</h2>
+
+  <div id="bulkUploadQuestions" class="fn-card scroll-mt-24">
+    <div class="fn-header flex items-center gap-3">
+      <span class="tag tag-ai">AI/QUESTION</span>
+      <code class="text-base text-primary font-bold bg-transparent p-0">bulkUploadQuestions(csvData: string)</code>
+    </div>
+    <div class="p-5">
+      <p class="text-gray-700 text-sm mb-4">Accepts a 10-column CSV. Parses and validates each row independently, collecting results without failing the entire batch on a single error. Expected schema:</p>
+      <div class="code-block text-xs mb-4">Question Text | Option 1 | Option 2 | Option 3 | Option 4 | Correct Options | Category | Tags | Weight | Negative Marking</div>
+      <ul class="text-sm text-gray-600 space-y-1 list-disc pl-5">
+        <li><code>Correct Options</code>: 0-based comma-separated indices (e.g., <code>0,2</code> for multi-correct)</li>
+        <li><code>Category</code>: Case-sensitive — must be exactly <code>Easy</code>, <code>Medium</code>, or <code>Hard</code></li>
+        <li><code>Tags</code>: Semicolon-delimited (e.g., <code>Math;Algebra</code>)</li>
+        <li><code>Negative Marking</code>: <code>true</code>/<code>false</code> or <code>1</code>/<code>0</code></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- EXAMS -->
+  <h2 class="font-heading text-2xl font-bold text-primary mt-12 mb-6 pb-2 border-b border-gray-300">Examination Engine</h2>
+
+  <div id="getExamDetails" class="fn-card scroll-mt-24">
+    <div class="fn-header flex items-center gap-3">
+      <span class="tag tag-exam">EXAM · CRITICAL</span>
+      <code class="text-base text-primary font-bold bg-transparent p-0">getExamDetails(examId, studentId, pcIdentifier?)</code>
+    </div>
+    <div class="p-5">
+      <p class="text-gray-700 text-sm mb-4">The primary security gate. Executes the following validation chain in order — any failure returns an error without revealing why:</p>
+      <ol class="list-decimal pl-5 space-y-2 text-sm text-gray-700">
+        <li>Verify <code>pcIdentifier</code> exists in the <code>pcs</code> collection and <code>status === 'Approved'</code></li>
+        <li>Verify the PC's <code>assignedStudentId</code> matches the provided <code>studentId</code></li>
+        <li>Verify the student's <code>assignedExamId</code> matches the provided <code>examId</code></li>
+        <li>Verify the exam's <code>status === 'In Progress'</code></li>
+        <li>Check the <code>exam_results</code> collection — if a result exists for this student+exam, return <code>alreadyTaken: true</code></li>
+      </ol>
+      <p class="text-xs text-gray-400 mt-4">Returns: <code>{"{"}exam: Exam, questions: Question[], alreadyTaken: boolean, error?: string{"}"}</code></p>
+    </div>
+  </div>
+
+  <div id="submitExam" class="fn-card scroll-mt-24">
+    <div class="fn-header flex items-center gap-3">
+      <span class="tag tag-exam">EXAM · CRITICAL</span>
+      <code class="text-base text-primary font-bold bg-transparent p-0">submitExam(examId, studentId, answers, pcIdentifier?)</code>
+    </div>
+    <div class="p-5">
+      <p class="text-gray-700 text-sm mb-4">Re-validates the full security chain from <code>getExamDetails</code>. Then applies answer sanitization: filters the submitted <code>answers</code> array to include only entries whose <code>questionId</code> belongs to the exam's own <code>questionIds</code> list. This neutralizes injection attacks where a student submits answers for questions outside their exam.</p>
+      <p class="text-gray-700 text-sm mb-4">Calculates the score by iterating validated answers against the question's <code>correctOptions</code> and <code>weight</code> fields. Inserts the result into <code>exam_results</code>, then sets only the submitting PC's <code>liveStatus</code> to <code>Finished</code> to prevent side-effects on other machines sharing the exam.</p>
+      <p class="text-xs text-gray-400">Returns: <code>{"{"}success: boolean, error?: string{"}"}</code></p>
+    </div>
+  </div>
+
+  <!-- LOGS -->
+  <h2 class="font-heading text-2xl font-bold text-primary mt-12 mb-6 pb-2 border-b border-gray-300">Audit & Results</h2>
+  <div id="getAdminLogs" class="fn-card scroll-mt-24">
+    <div class="fn-header"><code class="text-base text-primary font-bold bg-transparent p-0">getAdminLogs()</code></div>
+    <div class="p-5"><p class="text-gray-700 text-sm">Returns all entries from <code>admin_logs</code> sorted by <code>timestamp</code> descending. Every admin action (login, CRUD operations, exam control) writes to this collection via the internal <code>logAdminAction(action, details)</code> helper, which reads the <code>admin_user</code> cookie to attribute the identity.</p></div>
+  </div>
+</main>
+</div>
+
+<footer class="bg-primary text-gray-400 py-8 px-6 text-center text-sm mt-auto">
+  <p>AEGIS ExamLab — Open Source Documentation · <a href="index.html" class="text-accent hover:underline">Back to Home</a></p>
+</footer>
+</body>
+</html>

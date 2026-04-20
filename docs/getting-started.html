@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Getting Started — AEGIS ExamLab Docs</title>
+  <meta name="description"
+    content="Installation, environment setup, database seeding, and Docker deployment for AEGIS ExamLab.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { theme: { extend: { colors: { primary: '#374785', primaryLight: '#4B5EAA', accent: '#D98E38', bg: '#F0F2F5' }, fontFamily: { sans: ['Inter', 'sans-serif'], heading: ['Outfit', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] } } } }</script>
+  <style>
+    body {
+      background: #F0F2F5;
+    }
+
+    aside a {
+      transition: all .15s;
+    }
+
+    aside a:hover,
+    aside a.active {
+      color: #D98E38;
+      border-left: 3px solid #D98E38;
+      padding-left: .6rem;
+    }
+
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .8em;
+      background: #e8eaed;
+      padding: .15rem .35rem;
+      border-radius: .25rem;
+      color: #374785;
+    }
+
+    .code-block {
+      background: #1e2330;
+      color: #a8d8a8;
+      border-radius: .75rem;
+      padding: 1.5rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .82rem;
+      line-height: 1.75;
+      overflow-x: auto;
+    }
+
+    .step-number {
+      background: linear-gradient(135deg, #374785, #4B5EAA);
+      color: white;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: .85rem;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+
+<body class="font-sans antialiased flex flex-col min-h-screen">
+
+  <!-- Top Nav -->
+  <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <a href="index.html" class="font-heading font-bold text-xl text-primary">AEGIS <span
+          class="text-accent">ExamLab</span></a>
+      <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
+        <a href="getting-started.html" class="text-primary font-bold">Getting Started</a>
+        <a href="architecture.html" class="hover:text-primary">Architecture</a>
+        <a href="api-reference.html" class="hover:text-primary">API Reference</a>
+        <a href="admin-guide.html" class="hover:text-primary">Admin Guide</a>
+        <a href="contributing.html" class="hover:text-primary">Contributing</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="flex flex-1 max-w-7xl mx-auto w-full">
+    <!-- Sidebar -->
+    <aside class="hidden lg:block w-64 flex-shrink-0 py-10 pr-6">
+      <div class="sticky top-24 space-y-6">
+        <div>
+          <p class="text-xs uppercase font-bold text-gray-400 tracking-widest mb-3">Prerequisites</p>
+          <ul class="space-y-2 text-sm text-gray-600">
+            <li><a href="#requirements">System Requirements</a></li>
+            <li><a href="#dependencies">External Dependencies</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="text-xs uppercase font-bold text-gray-400 tracking-widest mb-3">Installation</p>
+          <ul class="space-y-2 text-sm text-gray-600">
+            <li><a href="#clone">Clone & Install</a></li>
+            <li><a href="#env">Environment Variables</a></li>
+            <li><a href="#database">Database Setup</a></li>
+            <li><a href="#seed">Seeding Default Data</a></li>
+            <li><a href="#run">Running the App</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="text-xs uppercase font-bold text-gray-400 tracking-widest mb-3">Deployment</p>
+          <ul class="space-y-2 text-sm text-gray-600">
+            <li><a href="#docker">Docker</a></li>
+            <li><a href="#production">Production Build</a></li>
+            <li><a href="#troubleshooting">Troubleshooting</a></li>
+          </ul>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 py-10 px-4 lg:px-10 max-w-4xl">
+
+      <div class="mb-10">
+        <p class="text-accent font-semibold text-sm mb-2">Getting Started</p>
+        <h1 class="font-heading text-5xl font-black text-primary mb-4">Installation & Setup</h1>
+        <p class="text-xl text-gray-600 leading-relaxed">This guide covers everything required to get AEGIS ExamLab
+          running in a local development environment, configure the database, and deploy with Docker for production.</p>
+      </div>
+
+      <!-- Requirements -->
+      <section id="requirements" class="mb-14 scroll-mt-24">
+        <h2 class="font-heading text-2xl font-bold text-primary mb-6 pb-2 border-b border-gray-300">System Requirements
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-white p-5 rounded-xl border border-gray-200">
+            <h3 class="font-semibold text-gray-800 mb-3">Runtime</h3>
+            <ul class="text-sm text-gray-600 space-y-2">
+              <li class="flex items-center gap-2"><span class="text-green-500">✓</span> Node.js 18.x or higher</li>
+              <li class="flex items-center gap-2"><span class="text-green-500">✓</span> npm 9.x or pnpm 8.x</li>
+              <li class="flex items-center gap-2"><span class="text-green-500">✓</span> TypeScript 5.x (dev dependency)
+              </li>
+            </ul>
+          </div>
+          <div class="bg-white p-5 rounded-xl border border-gray-200">
+            <h3 class="font-semibold text-gray-800 mb-3">Database</h3>
+            <ul class="text-sm text-gray-600 space-y-2">
+              <li class="flex items-center gap-2"><span class="text-green-500">✓</span> MongoDB 6.x+ (local or Atlas)
+              </li>
+              <li class="flex items-center gap-2"><span class="text-yellow-500">○</span> Firebase (optional — for
+                apphosting)</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Clone -->
+      <section id="clone" class="mb-14 scroll-mt-24">
+        <h2 class="font-heading text-2xl font-bold text-primary mb-6 pb-2 border-b border-gray-300">Clone & Install</h2>
+        <div class="space-y-4">
+          <div class="flex gap-4 items-start">
+            <div class="step-number mt-1">1</div>
+            <div class="flex-1">
+              <p class="text-gray-700 font-medium mb-2">Clone the repository and move into the project directory.</p>
+              <div class="code-block">git clone https://github.com/ERROR-SIDDH/AEGIS.git<br>cd AEGIS</div>
+            </div>
+          </div>
+          <div class="flex gap-4 items-start">
+            <div class="step-number mt-1">2</div>
+            <div class="flex-1">
+              <p class="text-gray-700 font-medium mb-2">Install all project dependencies. This includes Next.js, all
+                Radix UI components, MongoDB driver, Genkit AI, and Zod.</p>
+              <div class="code-block">npm install</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Env -->
+      <section id="env" class="mb-14 scroll-mt-24">
+        <h2 class="font-heading text-2xl font-bold text-primary mb-6 pb-2 border-b border-gray-300">Environment
+          Variables</h2>
+        <p class="text-gray-700 mb-4">Copy the example file and populate it with your credentials. AEGIS will fail to
+          start if <code>MONGODB_URI</code> is not defined.</p>
+        <div class="code-block mb-6">cp .env.example .env</div>
+        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th class="text-left px-4 py-3 font-semibold text-gray-700">Variable</th>
+                <th class="text-left px-4 py-3 font-semibold text-gray-700">Required</th>
+                <th class="text-left px-4 py-3 font-semibold text-gray-700">Description</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <tr>
+                <td class="px-4 py-3"><code>MONGODB_URI</code></td>
+                <td class="px-4 py-3"><span class="text-red-500 font-bold">Yes</span></td>
+                <td class="px-4 py-3 text-gray-600">Full MongoDB connection string. Accepts both local and Atlas URIs.
+                </td>
+              </tr>
+              <tr>
+                <td class="px-4 py-3"><code>GEMINI_API_KEY</code></td>
+                <td class="px-4 py-3"><span class="text-yellow-500 font-bold">Yes</span></td>
+                <td class="px-4 py-3 text-gray-600">Google Gemini API key for AI-assisted question classification via
+                  Genkit.</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-3"><code>DEFAULT_ADMIN_USERNAME</code></td>
+                <td class="px-4 py-3"><span class="text-gray-400">Optional</span></td>
+                <td class="px-4 py-3 text-gray-600">Username for the seeded default admin. Defaults to
+                  <code>admin</code>.</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-3"><code>DEFAULT_ADMIN_PASSWORD</code></td>
+                <td class="px-4 py-3"><span class="text-gray-400">Optional</span></td>
+                <td class="px-4 py-3 text-gray-600">Password for the seeded default admin. Change this immediately in
+                  production.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Database -->
+      <section id="database" class="mb-14 scroll-mt-24">
+        <h2 class="font-heading text-2xl font-bold text-primary mb-6 pb-2 border-b border-gray-300">Database Setup</h2>
+        <p class="text-gray-700 mb-4">AEGIS uses MongoDB and creates all collections lazily on first write. However, you
+          must be aware of a critical index requirement for the <code>pcs</code> collection:</p>
+        <div class="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-xl mb-4">
+          <h4 class="font-bold text-amber-800 mb-1">Important: Sparse MAC Address Index</h4>
+          <p class="text-amber-700 text-sm">The <code>pcs</code> collection requires a <strong>sparse unique
+              index</strong> on the <code>macAddress</code> field. A non-sparse unique index will cause PC approval to
+            fail whenever <code>macAddress</code> is <code>null</code> (which is the default in browser environments).
+            Run the fix script if encountering this issue.</p>
+        </div>
+        <div class="code-block">
+          <span class="text-gray-400">// database-fix.js — Run in a MongoDB shell to resolve the index
+            conflict</span><br>
+          db.pcs.dropIndex("macAddress_1");<br><br>
+          db.pcs.createIndex(<br>
+          &nbsp;&nbsp;{ "macAddress": 1 },<br>
+          &nbsp;&nbsp;{ unique: true, sparse: true, name: "macAddress_unique_sparse" }<br>
+          );
+        </div>
+      </section>
+
+      <!-- Seed -->
+      <section id="seed" class="mb-14 scroll-mt-24">
+        <h2 class="font-heading text-2xl font-bold text-primary mb-6 pb-2 border-b border-gray-300">Seeding Default
+          Admin Credentials</h2>
+        <p class="text-gray-700 mb-4">On a fresh deployment, the <code>admins</code> collection is empty. No one can log
+          into the dashboard. The <code>seed-db.js</code> script creates the first superadmin account from your
+          <code>.env</code> credentials. It is idempotent — running it multiple times is safe.</p>
+        <div class="code-block mb-4">node scripts/seed-db.js</div>
+        <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded-r-xl">
+          <p class="text-green-800 text-sm font-medium">Expected output:
+            <code>Success: Default administrative user 'admin' has been created.</code></p>
+        </div>
+        <p class="text-sm text-gray-500 mt-4">After seeding, navigate to <code>http://localhost:9002/login</code> and
+          log in with the credentials defined in your <code>.env</code> file.</p>
+      </section>
+
+      <!-- Run -->
+      <section id="run" class="mb-14 scroll-mt-24">
+        <h2 class="font-heading text-2xl font-bold text-primary mb-6 pb-2 border-b border-gray-300">Running the
+          Application</h2>
+        <div class="code-block mb-4">npm run dev<br><span class="text-gray-400"># App starts at
+            http://localhost:9002</span></div>
+        <p class="text-gray-700 mb-4">The development server is configured to run on port <strong>9002</strong> (defined
+          in <code>package.json</code> as <code>"dev": "next dev -p 9002"</code>). This avoids conflicts with other
+          common services on ports 3000 or 8000.</p>
+        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th class="text-left px-4 py-3 text-gray-700">Route</th>
+                <th class="text-left px-4 py-3 text-gray-700">Description</th>
+                <th class="text-left px-4 py-3 text-gray-700">Auth Required</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <tr>
+                <td class="px-4 py-3 font-mono text-primary">/</td>
+                <td class="px-4 py-3 text-gray-600">PC Registration portal</td>
+                <td class="px-4 py-3 text-gray-400">None</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-3 font-mono text-primary">/login</td>
+                <td class="px-4 py-3 text-gray-600">Admin login page</td>
+                <td class="px-4 py-3 text-gray-400">None</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-3 font-mono text-primary">/dashboard/*</td>
+                <td class="px-4 py-3 text-gray-600">All admin panels</td>
+                <td class="px-4 py-3 text-red-500 font-semibold">Admin cookie</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-3 font-mono text-primary">/exam/:examId</td>
+                <td class="px-4 py-3 text-gray-600">Student exam interface</td>
+                <td class="px-4 py-3 text-blue-500 font-semibold">localStorage token</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Docker -->
+      <section id="docker" class="mb-14 scroll-mt-24">
+        <h2 class="font-heading text-2xl font-bold text-primary mb-6 pb-2 border-b border-gray-300">Docker Deployment
+        </h2>
+        <p class="text-gray-700 mb-4">A multi-stage Dockerfile is included. Stage 1 (builder) compiles the Next.js
+          application. Stage 2 (runner) is a minimal production image.</p>
+        <div class="code-block mb-4">
+          <span class="text-gray-400"># Build the Docker image</span><br>
+          docker build -t aegis-examlab .<br><br>
+          <span class="text-gray-400"># Run, mapping container port 3000 to host port 4000</span><br>
+          docker run -p 4000:3000 --env-file .env aegis-examlab
+        </div>
+        <div class="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-xl">
+          <p class="text-amber-800 text-sm"><strong>Note:</strong> The Dockerfile copies your <code>.env</code> file
+            directly into the image at build time (<code>COPY --from=builder /app/.env ./.env</code>). For secure
+            production deployments, use Docker secrets or inject environment variables at runtime using the
+            <code>--env-file</code> flag or a secrets manager.</p>
+        </div>
+      </section>
+
+      <!-- Troubleshooting -->
+      <section id="troubleshooting" class="mb-14 scroll-mt-24">
+        <h2 class="font-heading text-2xl font-bold text-primary mb-6 pb-2 border-b border-gray-300">Troubleshooting</h2>
+        <div class="space-y-4">
+          <details class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <summary class="px-5 py-4 font-semibold text-gray-800 cursor-pointer hover:bg-gray-50">Error: Please define
+              the MONGODB_URI environment variable</summary>
+            <div class="px-5 pb-4 text-gray-600 text-sm border-t border-gray-100 pt-4">Your <code>.env</code> file is
+              missing or <code>MONGODB_URI</code> is not set. Ensure you ran <code>cp .env.example .env</code> and
+              populated the value. Restart the dev server after editing <code>.env</code>.</div>
+          </details>
+          <details class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <summary class="px-5 py-4 font-semibold text-gray-800 cursor-pointer hover:bg-gray-50">PC approval fails
+              with a MongoDB duplicate key error</summary>
+            <div class="px-5 pb-4 text-gray-600 text-sm border-t border-gray-100 pt-4">The <code>pcs</code> collection
+              has a non-sparse unique index on <code>macAddress</code>. Run the <code>database-fix.js</code> script to
+              recreate it as a sparse index. See the <a href="#database" class="text-accent underline">Database
+                Setup</a> section.</div>
+          </details>
+          <details class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <summary class="px-5 py-4 font-semibold text-gray-800 cursor-pointer hover:bg-gray-50">Cannot log into
+              /dashboard — cookie not being set</summary>
+            <div class="px-5 pb-4 text-gray-600 text-sm border-t border-gray-100 pt-4">Ensure the <code>admins</code>
+              collection is not empty. Run <code>node scripts/seed-db.js</code> to create a default admin, or manually
+              insert a document with <code>username</code>, <code>password</code>, and <code>role: 'admin'</code>.</div>
+          </details>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <footer class="bg-primary text-gray-400 py-8 px-6 text-center text-sm mt-auto">
+    <p>AEGIS ExamLab — Open Source Documentation · <a href="index.html" class="text-accent hover:underline">Back to
+        Home</a></p>
+  </footer>
+</body>
+
+</html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contributing — AEGIS ExamLab Docs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{primary:'#374785',primaryLight:'#4B5EAA',accent:'#D98E38'},fontFamily:{sans:['Inter','sans-serif'],heading:['Outfit','sans-serif'],mono:['JetBrains Mono','monospace']}}}}</script>
+  <style>
+    body{background:#F0F2F5;} code{font-size:.8em;background:#e8eaed;padding:.15rem .35rem;border-radius:.25rem;color:#374785;}
+    aside a{transition:all .15s;display:block;padding:.2rem 0;} aside a:hover{color:#D98E38;}
+    .roadmap-item{border-left:3px solid #D98E38;padding:.75rem 1rem;background:white;border-radius:0 .75rem .75rem 0;margin-bottom:.75rem;}
+    .roadmap-item.done{border-color:#22c55e;}
+    .roadmap-item.planned{border-color:#374785;}
+    .roadmap-item.future{border-color:#9ca3af;}
+  </style>
+</head>
+<body class="font-sans antialiased flex flex-col min-h-screen">
+<nav class="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-200">
+  <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+    <a href="index.html" class="font-heading font-bold text-xl text-primary">AEGIS <span class="text-accent">ExamLab</span></a>
+    <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
+      <a href="getting-started.html" class="hover:text-primary">Getting Started</a>
+      <a href="architecture.html" class="hover:text-primary">Architecture</a>
+      <a href="api-reference.html" class="hover:text-primary">API Reference</a>
+      <a href="admin-guide.html" class="hover:text-primary">Admin Guide</a>
+      <a href="contributing.html" class="text-primary font-bold">Contributing</a>
+    </div>
+  </div>
+</nav>
+
+<div class="flex flex-1 max-w-7xl mx-auto w-full">
+<aside class="hidden lg:block w-64 flex-shrink-0 py-10 pr-6 text-sm text-gray-600">
+  <div class="sticky top-24 space-y-5">
+    <div><p class="text-xs uppercase font-bold text-gray-400 tracking-widest mb-2">Contribution</p>
+      <a href="#code-of-conduct">Code of Conduct</a>
+      <a href="#getting-started">Setting Up Locally</a>
+      <a href="#workflow">PR Workflow</a>
+      <a href="#conventions">Code Conventions</a>
+    </div>
+    <div><p class="text-xs uppercase font-bold text-gray-400 tracking-widest mb-2">Roadmap</p>
+      <a href="#current">Current State</a>
+      <a href="#planned">Planned Features</a>
+      <a href="#os-level">OS-Level Future Work</a>
+    </div>
+    <div><p class="text-xs uppercase font-bold text-gray-400 tracking-widest mb-2">Security</p>
+      <a href="#reporting">Reporting Vulnerabilities</a>
+    </div>
+  </div>
+</aside>
+
+<main class="flex-1 py-10 px-4 lg:px-10">
+  <div class="mb-10">
+    <p class="text-accent font-semibold text-sm mb-2">Open Source</p>
+    <h1 class="font-heading text-5xl font-black text-primary mb-4">Contributing to AEGIS</h1>
+    <p class="text-xl text-gray-600 leading-relaxed">We welcome contributions of all forms — bug fixes, documentation improvements, feature additions, and security enhancements. This guide details our workflow, coding conventions, and development roadmap.</p>
+  </div>
+
+  <section id="code-of-conduct" class="mb-14 scroll-mt-24">
+    <h2 class="font-heading text-2xl font-bold text-primary mb-4 pb-2 border-b border-gray-300">Code of Conduct</h2>
+    <p class="text-gray-700 mb-4">AEGIS is built on a security-first philosophy. All contributions must respect this principle. We will not accept PRs that introduce convenience features at the expense of security — for example, bypassing server-side validation to simplify the client-side flow.</p>
+    <ul class="list-disc pl-5 space-y-2 text-sm text-gray-700">
+      <li>Be respectful and constructive in issue discussions.</li>
+      <li>Do not commit secrets, API keys, or personal data in any form.</li>
+      <li>Every PR that touches <code>src/lib/actions.ts</code> must include a security rationale comment.</li>
+    </ul>
+  </section>
+
+  <section id="getting-started" class="mb-14 scroll-mt-24">
+    <h2 class="font-heading text-2xl font-bold text-primary mb-4 pb-2 border-b border-gray-300">Setting Up for Development</h2>
+    <ol class="list-decimal pl-5 space-y-3 text-sm text-gray-700">
+      <li><strong>Fork</strong> the repository on GitHub and clone your fork.</li>
+      <li>Create a new branch: <code>git checkout -b feature/your-feature-name</code></li>
+      <li>Follow the <a href="getting-started.html" class="text-accent underline">Getting Started guide</a> to configure your local environment.</li>
+      <li>Run TypeScript type-check before committing: <code>npm run typecheck</code></li>
+      <li>Run the linter: <code>npm run lint</code></li>
+    </ol>
+  </section>
+
+  <section id="workflow" class="mb-14 scroll-mt-24">
+    <h2 class="font-heading text-2xl font-bold text-primary mb-4 pb-2 border-b border-gray-300">Pull Request Workflow</h2>
+    <div class="space-y-4">
+      <div class="bg-white p-5 rounded-xl border border-gray-200 flex gap-4">
+        <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm flex-shrink-0">1</div>
+        <div><h4 class="font-semibold text-gray-800">Open an Issue First</h4><p class="text-sm text-gray-600 mt-1">For non-trivial changes, open an issue to discuss the approach before coding. This avoids wasted effort on PRs that don't align with the project direction.</p></div>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-gray-200 flex gap-4">
+        <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm flex-shrink-0">2</div>
+        <div><h4 class="font-semibold text-gray-800">Keep PRs Focused</h4><p class="text-sm text-gray-600 mt-1">One PR, one concern. Do not bundle unrelated changes. A PR that fixes a bug AND adds a new feature is harder to review and harder to revert.</p></div>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-gray-200 flex gap-4">
+        <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm flex-shrink-0">3</div>
+        <div><h4 class="font-semibold text-gray-800">Describe Your Changes</h4><p class="text-sm text-gray-600 mt-1">Fill in the PR template completely. Include: what changed, why it changed, any security implications, and how to test the change manually.</p></div>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-gray-200 flex gap-4">
+        <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm flex-shrink-0">4</div>
+        <div><h4 class="font-semibold text-gray-800">Pass All Checks</h4><p class="text-sm text-gray-600 mt-1">Ensure <code>npm run typecheck</code> and <code>npm run lint</code> pass with no errors. PRs with TypeScript errors will not be merged.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="conventions" class="mb-14 scroll-mt-24">
+    <h2 class="font-heading text-2xl font-bold text-primary mb-4 pb-2 border-b border-gray-300">Code Conventions</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div class="bg-white p-5 rounded-xl border border-gray-200">
+        <h4 class="font-bold text-primary mb-2">Server Actions</h4>
+        <p class="text-sm text-gray-600">All data mutation must go through Server Actions in <code>src/lib/actions.ts</code>. Never expose MongoDB operations in Route Handlers or client components directly.</p>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-gray-200">
+        <h4 class="font-bold text-primary mb-2">Type Safety</h4>
+        <p class="text-sm text-gray-600">All data structures must be typed using interfaces from <code>src/lib/types.ts</code>. Do not use <code>any</code> in production code paths. Add new types to the types file.</p>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-gray-200">
+        <h4 class="font-bold text-primary mb-2">Validation</h4>
+        <p class="text-sm text-gray-600">All user inputs must be validated with a Zod schema before touching the database. Never trust client-provided data, including form fields and URL parameters.</p>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-gray-200">
+        <h4 class="font-bold text-primary mb-2">Audit Logging</h4>
+        <p class="text-sm text-gray-600">Every Server Action that modifies data must call <code>logAdminAction()</code> with a descriptive action string and relevant detail object. Do not skip logging for "minor" writes.</p>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-gray-200">
+        <h4 class="font-bold text-primary mb-2">UI Components</h4>
+        <p class="text-sm text-gray-600">Use Radix UI primitives via the shadcn/ui wrapper in <code>src/components/ui/</code>. Do not introduce new UI libraries. Custom components belong in <code>src/components/</code>.</p>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-gray-200">
+        <h4 class="font-bold text-primary mb-2">Cache Invalidation</h4>
+        <p class="text-sm text-gray-600">After every mutation in a Server Action, call <code>revalidatePath()</code> for all dashboard routes that display the mutated data to ensure Next.js cache consistency.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="current" class="mb-14 scroll-mt-24">
+    <h2 class="font-heading text-2xl font-bold text-primary mb-4 pb-2 border-b border-gray-300">Current State (v0.1.0)</h2>
+    <div class="space-y-2">
+      <div class="roadmap-item done"><p class="text-sm font-semibold text-gray-800">✅ PC Registration & Admin Approval Workflow</p></div>
+      <div class="roadmap-item done"><p class="text-sm font-semibold text-gray-800">✅ Student CRUD with Bulk CSV Import</p></div>
+      <div class="roadmap-item done"><p class="text-sm font-semibold text-gray-800">✅ AI-Assisted Question Bank (Genkit + Gemini)</p></div>
+      <div class="roadmap-item done"><p class="text-sm font-semibold text-gray-800">✅ Exam Scheduling and Configuration</p></div>
+      <div class="roadmap-item done"><p class="text-sm font-semibold text-gray-800">✅ Strict 5-Point Server-Side Validation Chain</p></div>
+      <div class="roadmap-item done"><p class="text-sm font-semibold text-gray-800">✅ 15-Second HTTP Heartbeat Telemetry</p></div>
+      <div class="roadmap-item done"><p class="text-sm font-semibold text-gray-800">✅ Absolute Epoch Timer (tamper-resistant)</p></div>
+      <div class="roadmap-item done"><p class="text-sm font-semibold text-gray-800">✅ Admin Audit Logging</p></div>
+      <div class="roadmap-item done"><p class="text-sm font-semibold text-gray-800">✅ Results Analytics with CSV Export</p></div>
+      <div class="roadmap-item done"><p class="text-sm font-semibold text-gray-800">✅ Docker Multi-Stage Production Build</p></div>
+    </div>
+  </section>
+
+  <section id="planned" class="mb-14 scroll-mt-24">
+    <h2 class="font-heading text-2xl font-bold text-primary mb-4 pb-2 border-b border-gray-300">Planned Enhancements</h2>
+    <div class="space-y-2">
+      <div class="roadmap-item planned"><p class="text-sm font-semibold text-gray-800">🔵 Password Hashing — Replace plain-text passwords with bcrypt hashed credentials</p><p class="text-xs text-gray-500 mt-1">Affects: <code>admins</code> collection, <code>authenticate()</code>, <code>seed-db.js</code></p></div>
+      <div class="roadmap-item planned"><p class="text-sm font-semibold text-gray-800">🔵 Per-Question Autosave — Persist each answer change to server as it happens</p><p class="text-xs text-gray-500 mt-1">Prevents data loss on crash. Requires debounced Server Action or localStorage checkpoint.</p></div>
+      <div class="roadmap-item planned"><p class="text-sm font-semibold text-gray-800">🔵 Server-Side Rate Limiting — Throttle submission endpoints to prevent spam</p><p class="text-xs text-gray-500 mt-1">Implement via Edge Middleware with an in-memory or Redis-backed counter.</p></div>
+      <div class="roadmap-item planned"><p class="text-sm font-semibold text-gray-800">🔵 Cryptographically Signed Device Tokens — Replace localStorage UUID with a signed JWT in HttpOnly cookie</p><p class="text-xs text-gray-500 mt-1">Eliminates the possibility of forging a <code>pcIdentifier</code> from another machine.</p></div>
+      <div class="roadmap-item planned"><p class="text-sm font-semibold text-gray-800">🔵 Answer Change Audit Trail — Log each answer selection event with timestamp</p><p class="text-xs text-gray-500 mt-1">Partially supported by the admin logs design. Full implementation requires per-event DB writes.</p></div>
+    </div>
+  </section>
+
+  <section id="os-level" class="mb-14 scroll-mt-24">
+    <h2 class="font-heading text-2xl font-bold text-primary mb-4 pb-2 border-b border-gray-300">Future Vision: OS-Level Integration</h2>
+    <div class="bg-gradient-to-br from-primary to-primaryLight text-white p-8 rounded-2xl">
+      <h3 class="font-heading text-2xl font-bold mb-4">Transitioning to the Operating System Layer</h3>
+      <p class="text-gray-200 leading-relaxed mb-4">The current AEGIS architecture operates entirely within the browser sandbox. While the server-side validation chain is robust, a determined student could still use the host operating system to cheat — for example, running a second browser window with reference material, using screen-capture tools, or manipulating the system clock.</p>
+      <p class="text-gray-200 leading-relaxed mb-4">The long-term vision for AEGIS is to develop a <strong>native OS-level proctoring layer</strong> that would:</p>
+      <ul class="text-gray-200 text-sm space-y-2 list-disc pl-5 mb-6">
+        <li>Lock the workstation into a kiosk mode, restricting all applications except the exam browser.</li>
+        <li>Monitor and restrict clipboard access, screenshot tools, and virtual machine detection.</li>
+        <li>Enforce hardware-level device binding using secure hardware identifiers (TPM chips, UEFI variables) rather than software-generated UUIDs.</li>
+        <li>Integrate with the existing web application via a local native agent that communicates over localhost, providing tamper-evident status signals to the server.</li>
+      </ul>
+      <p class="text-gray-300 text-sm"><strong>Status:</strong> Research phase. Contributions, design proposals, and proof-of-concepts are actively welcomed via GitHub Issues tagged <code>os-integration</code>.</p>
+    </div>
+  </section>
+
+  <section id="reporting" class="mb-14 scroll-mt-24">
+    <h2 class="font-heading text-2xl font-bold text-primary mb-4 pb-2 border-b border-gray-300">Reporting Security Vulnerabilities</h2>
+    <p class="text-gray-700 mb-4">Do <strong>not</strong> open a public GitHub issue for security vulnerabilities. Instead, report vulnerabilities via private email to the maintainers. Include a detailed description, steps to reproduce, and your assessment of impact and severity. We commit to acknowledging reports within 48 hours.</p>
+    <div class="bg-red-50 border border-red-200 rounded-xl p-5 text-sm text-red-800">
+      <strong>Known Security Limitations (Accepted Risks in v0.1.0):</strong>
+      <ul class="list-disc pl-5 mt-2 space-y-1">
+        <li>Passwords stored in plain text — fix is in the roadmap.</li>
+        <li><code>pcIdentifier</code> stored in browser <code>localStorage</code> — can be spoofed if an attacker has physical access to another approved machine.</li>
+        <li>Exam timer is client-computed — while server epoch timestamps are used, a fast network disruption could desync it. Server-authoritative timer validation at submission is the mitigation.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+</div>
+
+<footer class="bg-primary text-gray-400 py-8 px-6 text-center text-sm mt-auto">
+  <p>AEGIS ExamLab — Open Source Documentation · <a href="index.html" class="text-accent hover:underline">Back to Home</a></p>
+</footer>
+</body>
+</html>

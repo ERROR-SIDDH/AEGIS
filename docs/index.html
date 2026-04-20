@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AEGIS ExamLab — Open Source Documentation</title>
+  <meta name="description"
+    content="Official open-source documentation for AEGIS ExamLab: a secure, AI-assisted, proctored examination management system built with Next.js and MongoDB.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { primary: '#374785', primaryLight: '#4B5EAA', accent: '#D98E38', bg: '#F0F2F5' },
+          fontFamily: { sans: ['Inter', 'sans-serif'], heading: ['Outfit', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background: #F0F2F5;
+    }
+
+    .hero-gradient {
+      background: linear-gradient(135deg, #1a1f3a 0%, #374785 60%, #4B5EAA 100%);
+    }
+
+    .card-hover {
+      transition: transform .25s, box-shadow .25s;
+    }
+
+    .card-hover:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 40px rgba(55, 71, 133, .18);
+    }
+
+    .badge {
+      background: rgba(217, 142, 56, .15);
+      color: #D98E38;
+      border: 1px solid rgba(217, 142, 56, .3);
+    }
+
+    .feature-icon {
+      background: linear-gradient(135deg, #374785, #4B5EAA);
+    }
+  </style>
+</head>
+
+<body class="font-sans antialiased">
+
+  <!-- Top Nav -->
+  <nav class="sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <a href="index.html" class="font-heading font-bold text-xl text-primary">AEGIS <span
+          class="text-accent">ExamLab</span></a>
+      <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
+        <a href="getting-started.html" class="hover:text-primary transition-colors">Getting Started</a>
+        <a href="architecture.html" class="hover:text-primary transition-colors">Architecture</a>
+        <a href="api-reference.html" class="hover:text-primary transition-colors">API Reference</a>
+        <a href="admin-guide.html" class="hover:text-primary transition-colors">Admin Guide</a>
+        <a href="contributing.html" class="hover:text-primary transition-colors">Contributing</a>
+        <a href="https://github.com/ERROR-SIDDH/AEGIS" target="_blank"
+          class="bg-primary text-white px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-primaryLight transition-colors">GitHub
+          →</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero-gradient text-white py-28 px-6">
+    <div class="max-w-5xl mx-auto text-center">
+      <div class="inline-flex items-center gap-2 badge px-4 py-1.5 rounded-full text-sm font-semibold mb-8">
+        <span class="w-2 h-2 rounded-full bg-accent inline-block animate-pulse"></span>
+        Open Source · v0.1.0 · MIT License
+      </div>
+      <h1 class="font-heading text-5xl md:text-7xl font-black leading-tight mb-6">
+        Secure Exams.<br><span class="text-accent">Intelligently Proctored.</span>
+      </h1>
+      <p class="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed mb-10">
+        AEGIS ExamLab is a production-ready, open-source examination management platform built on Next.js 14 and
+        MongoDB. It enforces strict server-side validation, real-time telemetry, and AI-assisted question management for
+        lab-scale deployments.
+      </p>
+      <div class="flex flex-wrap justify-center gap-4">
+        <a href="getting-started.html"
+          class="bg-accent hover:bg-orange-500 text-white font-bold px-8 py-3.5 rounded-xl transition-all text-base">Quick
+          Start Guide →</a>
+        <a href="architecture.html"
+          class="bg-white/10 hover:bg-white/20 text-white font-bold px-8 py-3.5 rounded-xl transition-all text-base border border-white/20">Explore
+          Architecture</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Bar -->
+  <section class="bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-6 py-6 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+      <div>
+        <p class="text-3xl font-heading font-black text-primary">Next.js 14</p>
+        <p class="text-gray-500 text-sm mt-1">App Router Framework</p>
+      </div>
+      <div>
+        <p class="text-3xl font-heading font-black text-primary">MongoDB</p>
+        <p class="text-gray-500 text-sm mt-1">Primary Database</p>
+      </div>
+      <div>
+        <p class="text-3xl font-heading font-black text-primary">Genkit AI</p>
+        <p class="text-gray-500 text-sm mt-1">Question Intelligence</p>
+      </div>
+      <div>
+        <p class="text-3xl font-heading font-black text-primary">TypeScript</p>
+        <p class="text-gray-500 text-sm mt-1">End-to-End Type Safety</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Feature Grid -->
+  <section class="max-w-7xl mx-auto px-6 py-20">
+    <div class="text-center mb-14">
+      <h2 class="font-heading text-4xl font-black text-primary mb-3">A Complete Examination Ecosystem</h2>
+      <p class="text-gray-500 text-lg max-w-2xl mx-auto">Every component is purpose-built for security and reliability
+        in academic lab environments.</p>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 card-hover">
+        <div class="feature-icon w-12 h-12 rounded-xl flex items-center justify-center mb-5">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H4a2 2 0 01-2-2V5a2 2 0 012-2h16a2 2 0 012 2v10a2 2 0 01-2 2h-1" />
+          </svg>
+        </div>
+        <h3 class="font-heading text-xl font-bold text-primary mb-2">Workstation Registration</h3>
+        <p class="text-gray-600 text-sm leading-relaxed">PCs self-register via a browser form and receive a
+          cryptographic <code class="bg-gray-100 px-1 rounded">uniqueIdentifier</code> persisted to <code
+            class="bg-gray-100 px-1 rounded">localStorage</code>. Admin approval gates all exam access.</p>
+      </div>
+      <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 card-hover">
+        <div class="feature-icon w-12 h-12 rounded-xl flex items-center justify-center mb-5">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+        </div>
+        <h3 class="font-heading text-xl font-bold text-primary mb-2">Student Management</h3>
+        <p class="text-gray-600 text-sm leading-relaxed">Full CRUD with bulk CSV ingestion (10-column schema), duplicate
+          roll number detection, and optional exam assignment per student. Enforces DB-level uniqueness on <code
+            class="bg-gray-100 px-1 rounded">rollNumber</code>.</p>
+      </div>
+      <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 card-hover">
+        <div class="feature-icon w-12 h-12 rounded-xl flex items-center justify-center mb-5">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
+        </div>
+        <h3 class="font-heading text-xl font-bold text-primary mb-2">AI Question Bank</h3>
+        <p class="text-gray-600 text-sm leading-relaxed">Powered by Google Genkit (Gemini model). Auto-classifies
+          questions by difficulty (Easy/Medium/Hard), generates semantic tags, and supports LaTeX and coding snippet
+          rendering.</p>
+      </div>
+      <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 card-hover">
+        <div class="feature-icon w-12 h-12 rounded-xl flex items-center justify-center mb-5">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+        </div>
+        <h3 class="font-heading text-xl font-bold text-primary mb-2">Server-Side Validation</h3>
+        <p class="text-gray-600 text-sm leading-relaxed">No exam data reaches the client without passing a 5-point
+          server-side validation chain: PC approval → student mapping → exam assignment → status check → duplicate
+          submission guard.</p>
+      </div>
+      <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 card-hover">
+        <div class="feature-icon w-12 h-12 rounded-xl flex items-center justify-center mb-5">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <h3 class="font-heading text-xl font-bold text-primary mb-2">Live Telemetry</h3>
+        <p class="text-gray-600 text-sm leading-relaxed">Every active workstation pulses heartbeats to the server every
+          15 seconds via HTTP polling, updating its <code class="bg-gray-100 px-1 rounded">liveStatus</code> from
+          <em>Online → Attempting → Finished</em> with <code class="bg-gray-100 px-1 rounded">lastSeen</code>
+          timestamps.
+        </p>
+      </div>
+      <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 card-hover">
+        <div class="feature-icon w-12 h-12 rounded-xl flex items-center justify-center mb-5">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+          </svg>
+        </div>
+        <h3 class="font-heading text-xl font-bold text-primary mb-2">Audit Logging</h3>
+        <p class="text-gray-600 text-sm leading-relaxed">Every admin action (login, student creation, exam control) is
+          recorded with a timestamp and admin identity into the <code class="bg-gray-100 px-1 rounded">admin_logs</code>
+          collection. Fully queryable from the Logs dashboard panel.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick Start -->
+  <section class="bg-primary text-white py-20 px-6">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="font-heading text-3xl font-black mb-8">Up and Running in 60 Seconds</h2>
+      <div class="bg-black/40 rounded-2xl p-6 font-mono text-sm text-green-300 leading-loose">
+        <span class="text-gray-500"># 1. Clone and install</span><br>
+        git clone https://github.com/ERROR-SIDDH/AEGIS.git && cd AEGIS<br>
+        npm install<br><br>
+        <span class="text-gray-500"># 2. Configure environment</span><br>
+        cp .env.example .env<br>
+        <span class="text-gray-400"># Edit .env with your MONGODB_URI and GEMINI_API_KEY</span><br><br>
+        <span class="text-gray-500"># 3. Seed default admin credentials</span><br>
+        node scripts/seed-db.js<br><br>
+        <span class="text-gray-500"># 4. Start development server (port 9002)</span><br>
+        npm run dev
+      </div>
+      <a href="getting-started.html"
+        class="inline-block mt-6 bg-accent text-white font-bold px-6 py-3 rounded-xl hover:bg-orange-500 transition-colors">Full
+        Setup Guide →</a>
+    </div>
+  </section>
+
+  <!-- Docs Navigation Cards -->
+  <section class="max-w-7xl mx-auto px-6 py-20">
+    <h2 class="font-heading text-3xl font-black text-primary mb-10 text-center">Explore the Documentation</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <a href="getting-started.html" class="block bg-white p-6 rounded-2xl border border-gray-200 card-hover group">
+        <div class="text-3xl mb-3">🚀</div>
+        <h3 class="font-heading font-bold text-lg text-primary group-hover:text-accent transition-colors mb-2">Getting
+          Started</h3>
+        <p class="text-sm text-gray-500">Installation, environment config, database seeding, Docker deployment.</p>
+      </a>
+      <a href="architecture.html" class="block bg-white p-6 rounded-2xl border border-gray-200 card-hover group">
+        <div class="text-3xl mb-3">🏗️</div>
+        <h3 class="font-heading font-bold text-lg text-primary group-hover:text-accent transition-colors mb-2">
+          Architecture</h3>
+        <p class="text-sm text-gray-500">System design, data models, security posture, telemetry, and routing.</p>
+      </a>
+      <a href="api-reference.html" class="block bg-white p-6 rounded-2xl border border-gray-200 card-hover group">
+        <div class="text-3xl mb-3">📡</div>
+        <h3 class="font-heading font-bold text-lg text-primary group-hover:text-accent transition-colors mb-2">API
+          Reference</h3>
+        <p class="text-sm text-gray-500">Complete documentation for all Server Actions, parameters, and return types.
+        </p>
+      </a>
+      <a href="contributing.html" class="block bg-white p-6 rounded-2xl border border-gray-200 card-hover group">
+        <div class="text-3xl mb-3">🤝</div>
+        <h3 class="font-heading font-bold text-lg text-primary group-hover:text-accent transition-colors mb-2">
+          Contributing</h3>
+        <p class="text-sm text-gray-500">Roadmap, OS-level future work, PR guidelines, and development setup.</p>
+      </a>
+    </div>
+  </section>
+
+  <footer class="bg-primary text-gray-400 py-10 px-6 text-center text-sm">
+    <p class="text-white font-heading font-bold text-xl mb-2">AEGIS ExamLab</p>
+    <p>Open Source · MIT License · Built with Next.js &amp; MongoDB</p>
+  </footer>
+</body>
+
+</html>

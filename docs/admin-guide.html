@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Guide — AEGIS ExamLab Docs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{primary:'#374785',primaryLight:'#4B5EAA',accent:'#D98E38'},fontFamily:{sans:['Inter','sans-serif'],heading:['Outfit','sans-serif']}}}}</script>
+  <style>
+    body{background:#F0F2F5;} code{font-size:.8em;background:#e8eaed;padding:.15rem .35rem;border-radius:.25rem;color:#374785;}
+    aside a{transition:all .15s;display:block;padding:.2rem 0;} aside a:hover{color:#D98E38;}
+    .img-card{border-radius:.75rem;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 4px 6px -1px rgba(0,0,0,.07);cursor:zoom-in;transition:transform .25s;}
+    .img-card:hover{transform:scale(1.02);}
+    #lightbox{display:none;position:fixed;z-index:9999;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);align-items:center;justify-content:center;}
+    #lightbox img{max-width:90%;max-height:90%;border-radius:.75rem;}
+  </style>
+</head>
+<body class="font-sans antialiased flex flex-col min-h-screen">
+<nav class="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-200">
+  <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+    <a href="index.html" class="font-heading font-bold text-xl text-primary">AEGIS <span class="text-accent">ExamLab</span></a>
+    <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
+      <a href="getting-started.html" class="hover:text-primary">Getting Started</a>
+      <a href="architecture.html" class="hover:text-primary">Architecture</a>
+      <a href="api-reference.html" class="hover:text-primary">API Reference</a>
+      <a href="admin-guide.html" class="text-primary font-bold">Admin Guide</a>
+      <a href="contributing.html" class="hover:text-primary">Contributing</a>
+    </div>
+  </div>
+</nav>
+
+<div class="flex flex-1 max-w-7xl mx-auto w-full">
+<aside class="hidden lg:block w-64 flex-shrink-0 py-10 pr-6 text-sm text-gray-600">
+  <div class="sticky top-24 space-y-5">
+    <div><p class="text-xs uppercase font-bold text-gray-400 tracking-widest mb-2">Overview</p>
+      <a href="#login">Logging In</a><a href="#dashboard">Dashboard Overview</a>
+    </div>
+    <div><p class="text-xs uppercase font-bold text-gray-400 tracking-widest mb-2">Workstation Setup</p>
+      <a href="#pc-approval">Approving PCs</a><a href="#pc-mapping">Mapping Students to PCs</a>
+    </div>
+    <div><p class="text-xs uppercase font-bold text-gray-400 tracking-widest mb-2">Content</p>
+      <a href="#students">Managing Students</a><a href="#csv-students">Bulk Import Students</a>
+      <a href="#questions">Question Bank</a><a href="#csv-questions">Bulk Import Questions</a>
+      <a href="#csv-format">CSV Format Reference</a>
+    </div>
+    <div><p class="text-xs uppercase font-bold text-gray-400 tracking-widest mb-2">Exam Operations</p>
+      <a href="#create-exam">Creating an Exam</a><a href="#live-status">Live Monitoring</a>
+      <a href="#results">Results & Analytics</a><a href="#audit-logs">Audit Logs</a>
+    </div>
+  </div>
+</aside>
+
+<main class="flex-1 py-10 px-4 lg:px-10">
+  <div class="mb-10">
+    <p class="text-accent font-semibold text-sm mb-2">Administrator Guide</p>
+    <h1 class="font-heading text-5xl font-black text-primary mb-4">Administrator Guide</h1>
+    <p class="text-xl text-gray-600 leading-relaxed">End-to-end operational guide for system administrators. Covers every aspect of managing workstations, students, questions, exams, and real-time monitoring from the AEGIS dashboard.</p>
+  </div>
+
+  <section id="login" class="mb-14 scroll-mt-24">
+    <h2 class="font-heading text-2xl font-bold text-primary mb-4 pb-2 border-b border-gray-300">Logging In</h2>
+    <p class="text-gray-700 mb-4">Navigate to <code>/login</code>. Enter the credentials created during database seeding. On success, the server sets an <code>auth</code> HttpOnly cookie and redirects to <code>/dashboard</code>. Sessions persist until explicitly logged out.</p>
+    <div class="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-xl text-sm text-amber-800">
+      <strong>Security Note:</strong> Passwords are currently stored in plain text in the database. For production deployments, it is strongly recommended to hash passwords using <code>bcrypt</code> before storing them. This is noted as a priority in the roadmap.
+    </div>
+  </section>
+
+  <section id="dashboard" class="mb-14 scroll-mt-24">
+    <h2 class="font-heading text-2xl font-bold text-primary mb-4 pb-2 border-b border-gray-300">Dashboard Overview</h2>
+    <p class="text-gray-700 mb-6">The main dashboard displays four key metrics: Total Students, Total Questions, Active PCs (from total approved), and Upcoming Exams within 30 days. It also renders an Upcoming Exams list and a Question Distribution bar chart by difficulty.</p>
+    <img src="img/6.jpg" alt="Admin Dashboard Overview" class="img-card w-full mb-4" onclick="openLightbox(this.src)">
+    <p class="text-sm text-gray-500 text-center">Admin Dashboard — metrics, upcoming exams, and question distribution chart</p>
+  </section>
+
+  <section id="pc-approval" class="mb-14 scroll-mt-24">
+    <h2 class="font-heading text-2xl font-bold text-primary mb-4 pb-2 border-b border-gray-300">Approving Workstations</h2>
+    <p class="text-gray-700 mb-4">When a lab PC visits the root page (<code>/</code>) and submits its name, it creates a pending entry in <code>pc_requests</code>. The admin must approve it from <code>/dashboard/pcs</code>.</p>
+    <img src="img/1.png" alt="PC Registration" class="img-card w-full mb-4" onclick="openLightbox(this.src)">
+    <ol class="list-decimal pl-5 space-y-2 text-sm text-gray-700 mt-4">
+      <li>Navigate to <strong>PCs</strong> in the sidebar.</li>
+      <li>Find the pending request in the <em>PC Requests</em> table.</li>
+      <li>Click <strong>Approve</strong>. The system moves the document from <code>pc_requests</code> to <code>pcs</code> with <code>status: 'Approved'</code>.</li>
+      <li>The client's portal page will update on its next poll cycle (every few seconds) and display the student assignment.</li>
+    </ol>
+  </section>
+
+  <section id="pc-mapping" class="mb-14 scroll-mt-24">
+    <h2 class="font-heading text-2xl font-bold text-primary mb-4 pb-2 border-b border-gray-300">Mapping Students to PCs</h2>
+    <p class="text-gray-700 mb-4">From the PCs dashboard, each approved PC can be assigned a student from a dropdown. This sets <code>pc.assignedStudentId</code> in MongoDB. The PC client immediately picks up this assignment on its next <code>getPcStatus</code> call and displays the student's name, roll number, exam title, and exam status.</p>
+    <img src="img/2.jpg" alt="Student Waiting Room" class="img-card w-full mb-4" onclick="openLightbox(this.src)">
+    <p class="text-sm text-gray-500 text-center">The student-facing portal shows their mapped exam and current status</p>
+  </section>
+
+  <section id="students" class="mb-14 scroll-mt-24">
+    <h2 class="font-heading text-2xl font-bold text-primary mb-4 pb-2 border-b border-gray-300">Managing Students</h2>
+    <p class="text-gray-700 mb-6">The Students page displays a searchable, sortable table of all registered students with their roll numbers, class/batch, and assigned exams.</p>
+    <img src="img/5.jpg" alt="Student Management" class="img-card w-full mb-6" onclick="openLightbox(this.src)">
+    <ul class="list-disc pl-5 space-y-2 text-sm text-gray-700">
+      <li><strong>Add Student:</strong> Opens a form for manual entry of name, roll number, class/batch, and optional exam assignment.</li>
+      <li><strong>Edit Student:</strong> Updates any field. Changing the exam assignment immediately reflects on the mapped PC.</li>
+      <li><strong>Delete Student:</strong> Performs a cascading removal — also nullifies all PC mappings referencing this student.</li>
+      <li><strong>Assign Exam to Selected:</strong> Batch-assigns an exam to all checked students simultaneously.</li>
+    </ul>
+  </section>
+
+  <section id="csv-questions" class="mb-14 scroll-mt-24">
+    <h2 class="font-heading text-2xl font-bold text-primary mb-4 pb-2 border-b border-gray-300">AI-Assisted Question Bank</h2>
+    <p class="text-gray-700 mb-4">The Questions page provides a full CRUD interface for the question bank. Questions can be MCQ (2–4 options) or coding questions with a language selector and code snippet field.</p>
+    <img src="img/8.jpg" alt="Question Creation" class="img-card w-full mb-4" onclick="openLightbox(this.src)">
+    <p class="text-gray-700 text-sm mb-4">The AI integration via Google Genkit (Gemini model) automatically suggests difficulty level and semantic tags from the question text, reducing manual categorization effort.</p>
+  </section>
+
+  <section id="csv-format" class="mb-14 scroll-mt-24">
+    <h2 class="font-heading text-2xl font-bold text-primary mb-4 pb-2 border-b border-gray-300">CSV Format Reference</h2>
+    <h3 class="font-semibold text-lg text-primaryLight mb-3">Questions CSV (10 columns)</h3>
+    <div class="bg-white rounded-xl border border-gray-200 overflow-x-auto mb-6">
+      <table class="w-full text-xs">
+        <thead class="bg-gray-50 border-b"><tr><th class="px-3 py-2 text-left">#</th><th class="px-3 py-2 text-left">Column</th><th class="px-3 py-2 text-left">Required</th><th class="px-3 py-2 text-left">Format / Constraints</th></tr></thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr><td class="px-3 py-2">1</td><td class="px-3 py-2 font-mono">Question Text</td><td class="px-3 py-2 text-red-500">Yes</td><td class="px-3 py-2">Min 10 chars. Supports LaTeX math notation.</td></tr>
+          <tr><td class="px-3 py-2">2–5</td><td class="px-3 py-2 font-mono">Option 1–4</td><td class="px-3 py-2">1,2 required</td><td class="px-3 py-2">3 and 4 are optional, leave blank.</td></tr>
+          <tr><td class="px-3 py-2">6</td><td class="px-3 py-2 font-mono">Correct Options</td><td class="px-3 py-2 text-red-500">Yes</td><td class="px-3 py-2">0-based indices. E.g., <code>0</code> or <code>0,2</code> (no spaces).</td></tr>
+          <tr><td class="px-3 py-2">7</td><td class="px-3 py-2 font-mono">Category</td><td class="px-3 py-2 text-red-500">Yes</td><td class="px-3 py-2">Case-sensitive: <code>Easy</code>, <code>Medium</code>, or <code>Hard</code>.</td></tr>
+          <tr><td class="px-3 py-2">8</td><td class="px-3 py-2 font-mono">Tags</td><td class="px-3 py-2">No</td><td class="px-3 py-2">Semicolon-delimited. E.g., <code>Math;Algebra</code>.</td></tr>
+          <tr><td class="px-3 py-2">9</td><td class="px-3 py-2 font-mono">Weight</td><td class="px-3 py-2 text-red-500">Yes</td><td class="px-3 py-2">Non-negative number. E.g., <code>2</code>.</td></tr>
+          <tr><td class="px-3 py-2">10</td><td class="px-3 py-2 font-mono">Negative Marking</td><td class="px-3 py-2 text-red-500">Yes</td><td class="px-3 py-2"><code>true</code>/<code>false</code> or <code>1</code>/<code>0</code>.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3 class="font-semibold text-lg text-primaryLight mb-3">Students CSV (3–4 columns)</h3>
+    <div class="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+      <table class="w-full text-xs">
+        <thead class="bg-gray-50 border-b"><tr><th class="px-3 py-2 text-left">#</th><th class="px-3 py-2 text-left">Column</th><th class="px-3 py-2 text-left">Required</th><th class="px-3 py-2 text-left">Notes</th></tr></thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr><td class="px-3 py-2">1</td><td class="px-3 py-2 font-mono">Name</td><td class="px-3 py-2 text-red-500">Yes</td><td class="px-3 py-2">Full student name.</td></tr>
+          <tr><td class="px-3 py-2">2</td><td class="px-3 py-2 font-mono">Roll Number</td><td class="px-3 py-2 text-red-500">Yes</td><td class="px-3 py-2">Must be globally unique. Batch rejects on collision.</td></tr>
+          <tr><td class="px-3 py-2">3</td><td class="px-3 py-2 font-mono">Class/Batch</td><td class="px-3 py-2 text-red-500">Yes</td><td class="px-3 py-2">E.g., <code>CSE-2024</code>.</td></tr>
+          <tr><td class="px-3 py-2">4</td><td class="px-3 py-2 font-mono">Exam ID or Title</td><td class="px-3 py-2">No</td><td class="px-3 py-2">Resolved by ID first, then case-insensitive title match.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="live-status" class="mb-14 scroll-mt-24">
+    <h2 class="font-heading text-2xl font-bold text-primary mb-4 pb-2 border-b border-gray-300">Live Exam Monitoring</h2>
+    <p class="text-gray-700 mb-4">The <strong>Live Status</strong> panel at <code>/dashboard/live-status</code> shows a card for every active PC, displaying the assigned student, their exam, current <code>liveStatus</code>, and the <code>lastSeen</code> timestamp. PCs that have not sent a heartbeat in over 30 seconds should be considered offline.</p>
+    <img src="img/9.jpg" alt="Live Exam Status" class="img-card w-full mb-4" onclick="openLightbox(this.src)">
+  </section>
+
+  <section id="results" class="mb-14 scroll-mt-24">
+    <h2 class="font-heading text-2xl font-bold text-primary mb-4 pb-2 border-b border-gray-300">Results & Analytics</h2>
+    <p class="text-gray-700 mb-4">The Results panel provides a comprehensive view of all exam submissions. Key metrics displayed include total submissions, average score, pass rate, and score range. Two charts are rendered: a Score Distribution histogram and a Per-Exam Performance bar chart.</p>
+    <img src="img/4.png" alt="Exam Results" class="img-card w-full mb-4" onclick="openLightbox(this.src)">
+    <p class="text-gray-700 text-sm">Results can be exported as CSV. All data originates from the immutable <code>exam_results</code> collection — once submitted, results cannot be altered through the UI.</p>
+  </section>
+
+  <section id="audit-logs" class="mb-14 scroll-mt-24">
+    <h2 class="font-heading text-2xl font-bold text-primary mb-4 pb-2 border-b border-gray-300">Audit Logs</h2>
+    <p class="text-gray-700 mb-4">Every write operation performed through the admin dashboard writes an entry to <code>admin_logs</code>. The Logs page displays these in reverse chronological order.</p>
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b"><tr><th class="text-left px-4 py-3">Action</th><th class="text-left px-4 py-3">Trigger</th></tr></thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr><td class="px-4 py-3 font-mono text-primary">Admin Logged In</td><td class="px-4 py-3 text-gray-600">Successful <code>authenticate()</code> call</td></tr>
+          <tr><td class="px-4 py-3 font-mono text-primary">Created Question</td><td class="px-4 py-3 text-gray-600"><code>saveQuestion()</code> success</td></tr>
+          <tr><td class="px-4 py-3 font-mono text-primary">Bulk Uploaded Questions</td><td class="px-4 py-3 text-gray-600"><code>bulkUploadQuestions()</code> inserts</td></tr>
+          <tr><td class="px-4 py-3 font-mono text-primary">Added Student</td><td class="px-4 py-3 text-gray-600"><code>addStudent()</code> success</td></tr>
+          <tr><td class="px-4 py-3 font-mono text-primary">Deleted Student</td><td class="px-4 py-3 text-gray-600"><code>deleteStudent()</code> success (cascading)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+</div>
+
+<div id="lightbox" onclick="this.style.display='none'">
+  <img id="lb-img" src="" alt="Fullscreen">
+</div>
+<script>
+  function openLightbox(src){ document.getElementById('lb-img').src=src; document.getElementById('lightbox').style.display='flex'; }
+</script>
+
+<footer class="bg-primary text-gray-400 py-8 px-6 text-center text-sm mt-auto">
+  <p>AEGIS ExamLab — Open Source Documentation · <a href="index.html" class="text-accent hover:underline">Back to Home</a></p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Architecture — AEGIS ExamLab Docs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{primary:'#374785',primaryLight:'#4B5EAA',accent:'#D98E38'},fontFamily:{sans:['Inter','sans-serif'],heading:['Outfit','sans-serif'],mono:['JetBrains Mono','monospace']}}}}</script>
+  <style>
+    body{background:#F0F2F5;} code{font-family:'JetBrains Mono',monospace;font-size:.8em;background:#e8eaed;padding:.15rem .35rem;border-radius:.25rem;color:#374785;}
+    .code-block{background:#1e2330;color:#a8d8a8;border-radius:.75rem;padding:1.25rem 1.5rem;font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:1.75;overflow-x:auto;}
+    aside a{transition:all .15s;display:block;padding:.2rem 0;} aside a:hover{color:#D98E38;}
+    .chain-box{border:2px solid #374785;border-radius:.75rem;padding:1rem 1.5rem;text-align:center;background:white;}
+    .chain-arrow{text-align:center;font-size:1.5rem;color:#374785;margin:.25rem 0;}
+    .schema-field{display:flex;gap:.75rem;padding:.6rem 0;border-bottom:1px solid #f0f0f0;}
+    .schema-field:last-child{border-bottom:none;}
+  </style>
+</head>
+<body class="font-sans antialiased flex flex-col min-h-screen">
+<nav class="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-200">
+  <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+    <a href="index.html" class="font-heading font-bold text-xl text-primary">AEGIS <span class="text-accent">ExamLab</span></a>
+    <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
+      <a href="getting-started.html" class="hover:text-primary">Getting Started</a>
+      <a href="architecture.html" class="text-primary font-bold">Architecture</a>
+      <a href="api-reference.html" class="hover:text-primary">API Reference</a>
+      <a href="admin-guide.html" class="hover:text-primary">Admin Guide</a>
+      <a href="contributing.html" class="hover:text-primary">Contributing</a>
+    </div>
+  </div>
+</nav>
+<div class="flex flex-1 max-w-7xl mx-auto w-full">
+<aside class="hidden lg:block w-64 flex-shrink-0 py-10 pr-6 text-sm text-gray-600">
+  <div class="sticky top-24 space-y-5">
+    <div><p class="text-xs uppercase font-bold text-gray-400 tracking-widest mb-2">Overview</p>
+      <a href="#directory">Directory Structure</a><a href="#routing">Next.js Routing</a>
+    </div>
+    <div><p class="text-xs uppercase font-bold text-gray-400 tracking-widest mb-2">Data Layer</p>
+      <a href="#collections">MongoDB Collections</a>
+      <a href="#schemas">Data Schemas</a>
+      <a href="#connection">Connection Pooling</a>
+    </div>
+    <div><p class="text-xs uppercase font-bold text-gray-400 tracking-widest mb-2">Security</p>
+      <a href="#validation-chain">Validation Chain</a>
+      <a href="#middleware">Middleware Firewall</a>
+      <a href="#device-auth">Device Authentication</a>
+    </div>
+    <div><p class="text-xs uppercase font-bold text-gray-400 tracking-widest mb-2">Runtime</p>
+      <a href="#telemetry">Heartbeat Telemetry</a>
+      <a href="#timer">Absolute Timer Sync</a>
+      <a href="#audit">Audit Logging</a>
+    </div>
+  </div>
+</aside>
+
+<main class="flex-1 py-10 px-4 lg:px-10">
+  <div class="mb-10">
+    <p class="text-accent font-semibold text-sm mb-2">Architecture</p>
+    <h1 class="font-heading text-5xl font-black text-primary mb-4">System Architecture</h1>
+    <p class="text-xl text-gray-600 leading-relaxed">A complete technical breakdown of how AEGIS ExamLab is structured — from its Next.js routing and MongoDB data model to the security chain, heartbeat telemetry, and middleware firewall.</p>
+  </div>
+
+  <section id="directory" class="mb-14 scroll-mt-24">
+    <h2 class="font-heading text-2xl font-bold text-primary mb-6 pb-2 border-b border-gray-300">Repository Directory Structure</h2>
+    <div class="code-block">
+      aegis-examlab/<br>
+      ├── src/<br>
+      │&nbsp;&nbsp; ├── app/                    <span class="text-gray-400"># Next.js App Router root</span><br>
+      │&nbsp;&nbsp; │&nbsp;&nbsp; ├── (dashboard)/       <span class="text-gray-400"># Route group — all admin pages</span><br>
+      │&nbsp;&nbsp; │&nbsp;&nbsp; │&nbsp;&nbsp; ├── dashboard/pcs/<br>
+      │&nbsp;&nbsp; │&nbsp;&nbsp; │&nbsp;&nbsp; ├── dashboard/students/<br>
+      │&nbsp;&nbsp; │&nbsp;&nbsp; │&nbsp;&nbsp; ├── dashboard/questions/<br>
+      │&nbsp;&nbsp; │&nbsp;&nbsp; │&nbsp;&nbsp; ├── dashboard/exams/<br>
+      │&nbsp;&nbsp; │&nbsp;&nbsp; │&nbsp;&nbsp; ├── dashboard/live-status/<br>
+      │&nbsp;&nbsp; │&nbsp;&nbsp; │&nbsp;&nbsp; ├── dashboard/results/<br>
+      │&nbsp;&nbsp; │&nbsp;&nbsp; │&nbsp;&nbsp; └── dashboard/logs/<br>
+      │&nbsp;&nbsp; │&nbsp;&nbsp; ├── exam/[examId]/     <span class="text-gray-400"># Student exam interface (dynamic route)</span><br>
+      │&nbsp;&nbsp; │&nbsp;&nbsp; ├── login/             <span class="text-gray-400"># Admin login page</span><br>
+      │&nbsp;&nbsp; │&nbsp;&nbsp; ├── api/               <span class="text-gray-400"># Utility API routes (debug, migrations)</span><br>
+      │&nbsp;&nbsp; │&nbsp;&nbsp; └── page.tsx           <span class="text-gray-400"># Root: PC Registration portal</span><br>
+      │&nbsp;&nbsp; ├── components/            <span class="text-gray-400"># Radix UI + shadcn/ui component library</span><br>
+      │&nbsp;&nbsp; ├── hooks/                 <span class="text-gray-400"># Custom React hooks (use-toast)</span><br>
+      │&nbsp;&nbsp; ├── lib/<br>
+      │&nbsp;&nbsp; │&nbsp;&nbsp; ├── actions.ts         <span class="text-gray-400"># ALL Server Actions — business logic</span><br>
+      │&nbsp;&nbsp; │&nbsp;&nbsp; ├── mongodb.ts         <span class="text-gray-400"># DB connection + collection helpers</span><br>
+      │&nbsp;&nbsp; │&nbsp;&nbsp; ├── types.ts           <span class="text-gray-400"># TypeScript type definitions</span><br>
+      │&nbsp;&nbsp; │&nbsp;&nbsp; └── utils.ts           <span class="text-gray-400"># Tailwind class utilities</span><br>
+      │&nbsp;&nbsp; └── middleware.ts          <span class="text-gray-400"># Edge routing firewall</span><br>
+      ├── docs/                      <span class="text-gray-400"># GitHub Pages documentation (this site)</span><br>
+      ├── scripts/seed-db.js         <span class="text-gray-400"># Admin credential bootstrapper</span><br>
+      ├── database-fix.js            <span class="text-gray-400"># MongoDB index repair utility</span><br>
+      ├── Dockerfile                 <span class="text-gray-400"># Multi-stage production image</span><br>
+      └── .env.example               <span class="text-gray-400"># Environment variable template</span>
+    </div>
+  </section>
+
+  <section id="collections" class="mb-14 scroll-mt-24">
+    <h2 class="font-heading text-2xl font-bold text-primary mb-6 pb-2 border-b border-gray-300">MongoDB Collections</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="bg-white p-5 rounded-xl border border-gray-200">
+        <h3 class="font-bold text-primary mb-1">pcs</h3>
+        <p class="text-xs text-gray-500 mb-2">Approved and pending client machines</p>
+        <div class="text-xs text-gray-600 space-y-1 font-mono">
+          <div>_id, name, ipAddress, macAddress?</div>
+          <div>uniqueIdentifier, status (Pending|Approved|Rejected)</div>
+          <div>assignedStudentId?, liveStatus?, lastSeen?</div>
+        </div>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-gray-200">
+        <h3 class="font-bold text-primary mb-1">pc_requests</h3>
+        <p class="text-xs text-gray-500 mb-2">Unapproved registration requests</p>
+        <div class="text-xs text-gray-600 font-mono">name, uniqueIdentifier, requestedAt</div>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-gray-200">
+        <h3 class="font-bold text-primary mb-1">students</h3>
+        <p class="text-xs text-gray-500 mb-2">Student roster with exam assignments</p>
+        <div class="text-xs text-gray-600 font-mono">name, rollNumber (unique), classBatch, assignedExamId?</div>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-gray-200">
+        <h3 class="font-bold text-primary mb-1">questions</h3>
+        <p class="text-xs text-gray-500 mb-2">Question bank with AI metadata</p>
+        <div class="text-xs text-gray-600 font-mono">text, options[], correctOptions[], category, tags[], weight, negativeMarking</div>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-gray-200">
+        <h3 class="font-bold text-primary mb-1">exams</h3>
+        <p class="text-xs text-gray-500 mb-2">Exam configurations and state</p>
+        <div class="text-xs text-gray-600 font-mono">title, description, startTime, duration, status (Scheduled|In Progress|Completed), questionIds[]</div>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-gray-200">
+        <h3 class="font-bold text-primary mb-1">exam_results</h3>
+        <p class="text-xs text-gray-500 mb-2">Immutable submission records</p>
+        <div class="text-xs text-gray-600 font-mono">studentId, examId, answers[], score, totalQuestions, completedAt</div>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-gray-200">
+        <h3 class="font-bold text-primary mb-1">admins</h3>
+        <p class="text-xs text-gray-500 mb-2">Admin credentials</p>
+        <div class="text-xs text-gray-600 font-mono">username, password, role (admin|superadmin)</div>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-gray-200">
+        <h3 class="font-bold text-primary mb-1">admin_logs</h3>
+        <p class="text-xs text-gray-500 mb-2">Full audit trail</p>
+        <div class="text-xs text-gray-600 font-mono">adminUsername, action, details{"{}"}, timestamp</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="validation-chain" class="mb-14 scroll-mt-24">
+    <h2 class="font-heading text-2xl font-bold text-primary mb-6 pb-2 border-b border-gray-300">Server-Side Validation Chain</h2>
+    <p class="text-gray-700 mb-6">Before any exam data is served or any submission is accepted, the request must pass through a strict sequential trust chain. Each step references the previous, making it impossible to bypass one level by knowing another's identifiers.</p>
+    <div class="max-w-md mx-auto space-y-1">
+      <div class="chain-box"><p class="font-bold text-primary">1. PC Exists & Approved</p><p class="text-xs text-gray-500">Lookup by <code>pcIdentifier</code> → <code>status === 'Approved'</code></p></div>
+      <div class="chain-arrow">↓</div>
+      <div class="chain-box"><p class="font-bold text-primary">2. Student Mapping Verified</p><p class="text-xs text-gray-500">PC's <code>assignedStudentId</code> === provided <code>studentId</code></p></div>
+      <div class="chain-arrow">↓</div>
+      <div class="chain-box"><p class="font-bold text-primary">3. Exam Assignment Verified</p><p class="text-xs text-gray-500">Student's <code>assignedExamId</code> === provided <code>examId</code></p></div>
+      <div class="chain-arrow">↓</div>
+      <div class="chain-box"><p class="font-bold text-primary">4. Exam In Progress</p><p class="text-xs text-gray-500">Exam <code>status === 'In Progress'</code></p></div>
+      <div class="chain-arrow">↓</div>
+      <div class="chain-box"><p class="font-bold text-primary">5. No Prior Submission</p><p class="text-xs text-gray-500">No document in <code>exam_results</code> for this student+exam</p></div>
+      <div class="chain-arrow">↓</div>
+      <div class="chain-box border-accent"><p class="font-bold text-accent">✓ Access Granted</p></div>
+    </div>
+  </section>
+
+  <section id="middleware" class="mb-14 scroll-mt-24">
+    <h2 class="font-heading text-2xl font-bold text-primary mb-6 pb-2 border-b border-gray-300">Middleware Routing Firewall</h2>
+    <p class="text-gray-700 mb-4">The <code>src/middleware.ts</code> Edge function intercepts all matching requests before Next.js renders a single component. This ensures the auth check has zero overhead from React rendering.</p>
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200"><tr><th class="text-left px-4 py-3">Route Pattern</th><th class="text-left px-4 py-3">Auth Check</th><th class="text-left px-4 py-3">Rationale</th></tr></thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr><td class="px-4 py-3 font-mono">/</td><td class="px-4 py-3 text-green-600">Exempt</td><td class="px-4 py-3 text-gray-600 text-xs">PC registration is public by design — any machine must be able to self-register.</td></tr>
+          <tr><td class="px-4 py-3 font-mono">/login</td><td class="px-4 py-3 text-green-600">Exempt</td><td class="px-4 py-3 text-gray-600 text-xs">Required to be publicly accessible for login flow.</td></tr>
+          <tr><td class="px-4 py-3 font-mono">/exam/*</td><td class="px-4 py-3 text-blue-600">Exempt (token-based)</td><td class="px-4 py-3 text-gray-600 text-xs">Exam pages use <code>localStorage</code> device tokens verified by Server Actions, not HTTP cookies.</td></tr>
+          <tr><td class="px-4 py-3 font-mono">/dashboard/*</td><td class="px-4 py-3 text-red-600">Required</td><td class="px-4 py-3 text-gray-600 text-xs">Checks for <code>auth</code> cookie. Redirects to <code>/login</code> if absent.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="telemetry" class="mb-14 scroll-mt-24">
+    <h2 class="font-heading text-2xl font-bold text-primary mb-6 pb-2 border-b border-gray-300">Heartbeat Telemetry System</h2>
+    <p class="text-gray-700 mb-4">AEGIS uses <strong>HTTP long-polling over WebSockets</strong> for telemetry. This is a deliberate architectural choice.</p>
+    <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-6">
+      <h4 class="font-bold text-blue-800 mb-2">Why HTTP Polling over WebSockets?</h4>
+      <p class="text-blue-700 text-sm">Institutional networks (universities, examination halls) frequently operate behind strict Layer-7 firewalls that block WebSocket upgrade requests. HTTP polling (standard GET/POST) is virtually never blocked. A 15-second interval provides near-real-time visibility without significant server overhead for typical exam sizes (10–100 concurrent PCs).</p>
+    </div>
+    <p class="text-gray-700 text-sm">The client's <code>useEffect</code> in <code>src/app/exam/[examId]/page.tsx</code> sets up a <code>setInterval</code> that fires <code>updatePcLiveStatus(pcIdentifier, 'Attempting')</code> every 15,000ms. The cleanup function (<code>return () =&gt; clearInterval(heartbeatInterval)</code>) prevents memory leaks when the component unmounts.</p>
+  </section>
+
+  <section id="timer" class="mb-14 scroll-mt-24">
+    <h2 class="font-heading text-2xl font-bold text-primary mb-6 pb-2 border-b border-gray-300">Absolute Epoch Timer Synchronization</h2>
+    <div class="bg-white p-6 rounded-xl border border-gray-200">
+      <p class="text-gray-700 mb-4">A common attack vector in web-based exams is manipulating the local system clock to extend the countdown timer. AEGIS defends against this architecturally:</p>
+      <div class="code-block mb-4">
+        <span class="text-gray-400">// src/app/exam/[examId]/page.tsx</span><br>
+        const examEndTime = new Date(data.exam.startTime).getTime()<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; + data.exam.duration * 60 * 1000;<br>
+        const now = new Date().getTime();<br>
+        const remainingTime = Math.max(0, Math.floor((examEndTime - now) / 1000));
+      </div>
+      <p class="text-gray-700 text-sm">The countdown is computed from the <strong>server-provided absolute epoch timestamps</strong> (<code>startTime</code> + <code>duration</code> in minutes). Even if a student manipulates their clock, the server's own <code>status</code> field governs submission eligibility — once the server marks the exam <code>Completed</code>, <code>getExamDetails</code> rejects all requests.</p>
+    </div>
+  </section>
+
+  <section id="connection" class="mb-14 scroll-mt-24">
+    <h2 class="font-heading text-2xl font-bold text-primary mb-6 pb-2 border-b border-gray-300">MongoDB Connection Pooling</h2>
+    <p class="text-gray-700 mb-4">Next.js in production spawns multiple Node.js worker processes. Each cold-started serverless function would naively open a new MongoDB connection, rapidly exhausting the cluster's connection limit (typically 500 on free-tier Atlas). AEGIS solves this with a module-level cache:</p>
+    <div class="code-block">
+      <span class="text-gray-400">// src/lib/mongodb.ts</span><br>
+      let cachedClient: MongoClient | null = null;<br><br>
+      export async function getDb() {"{"}<br>
+      &nbsp;&nbsp;if (cachedClient) return cachedClient.db(); <span class="text-gray-400">// ← reuse existing</span><br>
+      &nbsp;&nbsp;await client.connect();<br>
+      &nbsp;&nbsp;cachedClient = client;<br>
+      &nbsp;&nbsp;return client.db();<br>
+      {"}"}
+    </div>
+    <p class="text-gray-600 text-sm mt-3">The <code>cachedClient</code> is stored in module scope. In Next.js, module scope persists across multiple requests within the same Node.js process, effectively creating a connection pool per worker without needing an external pooling library.</p>
+  </section>
+
+</main>
+</div>
+<footer class="bg-primary text-gray-400 py-8 px-6 text-center text-sm mt-auto">
+  <p>AEGIS ExamLab — Open Source Documentation · <a href="index.html" class="text-accent hover:underline">Back to Home</a></p>
+</footer>
+</body>
+</html>
